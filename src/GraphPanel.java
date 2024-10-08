@@ -13,24 +13,36 @@ class GraphPanel extends JPanel implements MouseListener, MouseMotionListener {
     private Node startNode;
     private Node endNode;
     private int nodeCount = 0;
-
     private Node edgeStartNode = null;
-
     private int tempX, tempY;
 
     JButton exportButton = new JButton("Export Graph");
     JButton importButton = new JButton("Import Graph");
-
+    JButton startMinimizingButton = new JButton("Start Minimizing");
 
     public GraphPanel() {
         nodes = new ArrayList<>();
         edges = new ArrayList<>();
+        setLayout(new BorderLayout());
+
+        JPanel topButtonPanel = new JPanel();
+        topButtonPanel.add(exportButton);
+        topButtonPanel.add(importButton);
+        this.add(topButtonPanel, BorderLayout.NORTH);
+
+        this.add(startMinimizingButton, BorderLayout.SOUTH);
+
         addMouseListener(this);
         addMouseMotionListener(this);
         exportButton.addActionListener(e -> exportGraph());
         importButton.addActionListener(e -> importGraph());
-        this.add(exportButton);
-        this.add(importButton);
+
+        startMinimizingButton.addActionListener(e -> {
+            JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            frame.setContentPane(new MinimizingPanel());
+            frame.revalidate();
+            frame.repaint();
+        });
     }
 
     @Override
@@ -46,7 +58,6 @@ class GraphPanel extends JPanel implements MouseListener, MouseMotionListener {
             Node node2 = nodes.get(edge[1]);
             g.drawLine(node1.x, node1.y, node2.x, node2.y);
         }
-
         for (Node node : nodes) {
             node.draw(g, node == startNode, node == endNode);
         }
