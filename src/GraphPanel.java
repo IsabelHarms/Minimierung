@@ -1,6 +1,7 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,11 +18,19 @@ class GraphPanel extends JPanel implements MouseListener, MouseMotionListener {
 
     private int tempX, tempY;
 
+    JButton exportButton = new JButton("Export Graph");
+    JButton importButton = new JButton("Import Graph");
+
+
     public GraphPanel() {
         nodes = new ArrayList<>();
         edges = new ArrayList<>();
         addMouseListener(this);
         addMouseMotionListener(this);
+        exportButton.addActionListener(e -> exportGraph());
+        importButton.addActionListener(e -> importGraph());
+        this.add(exportButton);
+        this.add(importButton);
     }
 
     @Override
@@ -150,4 +159,88 @@ class GraphPanel extends JPanel implements MouseListener, MouseMotionListener {
 
     @Override
     public void mouseExited(MouseEvent e) {}
+
+    private void exportGraph() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Specify a file to save");
+        int userSelection = fileChooser.showSaveDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToSave = fileChooser.getSelectedFile();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave))) {
+                // Write nodes
+                for (Node node : nodes) {
+                    String type = "";
+                    if (node == startNode) type += "START ";
+                    if (node == endNode) type += "END ";
+                    writer.write(node.label + "," + node.x + "," + node.y + "," + type.trim());
+                    writer.newLine();
+                }
+
+                // Write edges
+                for (int[] edge : edges) {
+                    writer.write("EDGE," + edge[0] + "," + edge[1]);
+                    writer.newLine();
+                }
+
+                JOptionPane.showMessageDialog(this, "Graph exported successfully!");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error exporting graph: " + e.getMessage());
+            }
+        }
+    }
+
+
+    private void importGraph() {
+        JFileChooser fileChooser = new JFileChooser();
+        fileChooser.setDialogTitle("Select a file to import");
+        int userSelection = fileChooser.showOpenDialog(this);
+
+        if (userSelection == JFileChooser.APPROVE_OPTION) {
+            File fileToImport = fileChooser.getSelectedFile();
+            try (BufferedReader reader = new BufferedReader(new FileReader(fileToImport))) {
+                nodes.clear();  // Clear existing nodes
+                edges.clear();  // Clear existing edges
+                startNode = null;  // Reset start node
+                endNode = null;  // Reset end node
+                nodeCount = 0;  // Reset node count
+
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] parts = line.split(",");
+                    if (parts[0].equals("EDGE")) {
+                        int fromIndex = Integer.parseInt(parts[1]);
+                        int toIndex = Integer.parseInt(parts[2]);
+                        edges.add(new int[]{fromIndex, toIndex});  // Store edge
+                    } else {
+                        String label = parts[0];
+                        int x = Integer.parseInt(parts[1]);
+                        int y = Integer.parseInt(parts[2]);
+                        Node newNode = new Node(x, y, label);
+
+                        // Determine if the node is start or end
+                        if (parts.length > 3) {
+                            for (String type : parts[3].split(" ")) {
+                                if (type.equalsIgnoreCase("START")) {
+                                    startNode = newNode;
+                                }
+                                if (type.equalsIgnoreCase("END")) {
+                                    endNode = newNode;
+                                }
+                            }
+                        }
+                        nodes.add(newNode);
+                        nodeCount++;
+                    }
+                }
+                repaint();
+                JOptionPane.showMessageDialog(this, "Graph imported successfully!");
+            } catch (IOException e) {
+                JOptionPane.showMessageDialog(this, "Error importing graph: " + e.getMessage());
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Error in file format: " + e.getMessage());
+            }
+        }
+    }
+
 }
