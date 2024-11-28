@@ -1,17 +1,35 @@
 import java.awt.*;
+import java.util.ArrayList;
+import java.util.List;
 
 class Node {
     int x, y;
-    String label;
+    int number;
 
-    public Node(int x, int y, String label) {
+    boolean isStart;
+
+    boolean isEnd;
+
+    List<Node> predecessors;
+    List<Node> successors;
+
+    List<Edge> incomingEdges;
+    List<Edge> outgoingEdges;
+
+    public Node(int x, int y, int number) {
         this.x = x;
         this.y = y;
-        this.label = label;
+        this.number = number;
+        incomingEdges = new ArrayList<>();
+        outgoingEdges = new ArrayList<>();
+    }
+
+    public String getLabel() {
+        return "Z" + number;
     }
 
 
-    public void draw(Graphics g, boolean isStart, boolean isEnd) {
+    public void draw(Graphics g) {
         if (isStart && isEnd) {
             g.setColor(Color.BLUE);
             g.fillOval(x - 15, y - 15, 30, 30);
@@ -30,9 +48,9 @@ class Node {
         g.drawOval(x - 15, y - 15, 30, 30);
 
         FontMetrics fm = g.getFontMetrics();
-        int labelWidth = fm.stringWidth(label);
+        int labelWidth = fm.stringWidth(this.getLabel());
         int labelHeight = fm.getAscent();
-        g.drawString(label, x - labelWidth / 2, y + labelHeight / 4);
+        g.drawString(this.getLabel(), x - labelWidth / 2, y + labelHeight / 4);
     }
 
 

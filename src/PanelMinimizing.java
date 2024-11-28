@@ -3,8 +3,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-class MinimizingPanel extends JPanel {
-    public MinimizingPanel() {
+class PanelMinimizing extends JPanel {
+    public PanelMinimizing() {
         setLayout(new BorderLayout());
 
         JButton backButton = new JButton("← Back");
