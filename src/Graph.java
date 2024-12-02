@@ -1,12 +1,9 @@
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 class Graph {
     Node startNode;
-    Node[] endNodes;
+    List<Node> endNodes;
     public List<Node> nodes;
     public List<Edge> edges;
 
@@ -15,39 +12,37 @@ class Graph {
     public Graph() {
         nodes = new ArrayList<>();
         edges = new ArrayList<>();
-        endNodes = new Node[]{};
+        endNodes = new ArrayList<>();
     }
 
 
-    public boolean validate() {
+    public String validate() {
         for (Node node: nodes) {
             if (node.incomingEdges.size()==0 && node.outgoingEdges.size()==0) {
-                return false; //not connected
+                return "node " + node.getLabel() + " is not connected "; //not connected
             }
             if (node.outgoingEdges.size()==0 && !node.isEnd) {
-                return false; //dead end
+                return "node " + node.getLabel() + " is a dead end "; //dead end
             }
             if (node.incomingEdges.size()==0 && !node.isStart) {
-                return false; //not reachable
+                return "node " + node.getLabel() + " is not reachable "; //not reachable
             }
             Set<Character> seenCharacters = new HashSet<>();
-            for (Edge incomingEdge: node.incomingEdges) {
-                for (char c : incomingEdge.characters) {
+            for (Edge outgoingEdge: node.outgoingEdges) {
+                for (char c : outgoingEdge.characters) {
                     if (!seenCharacters.add(c)) {
-                        return false; // This character is a duplicate, therefore not deterministic
+                        return "multiple options from node " + node.getLabel() + " via character " + c; // This character is a duplicate, therefore not graph deterministic
                     }
                 }
             }
         }
-        return true;
-    } //todo check for other invalid characteristics
+        return "valid";
+    } //todo check for other invalid characteristics eg. z0-z1 z2-z3 and make 1 state possible
 
     public String getGraphState() {
         StringBuilder sb = new StringBuilder();
 
-        if (!this.validate()) {
-            return "unfortunately this is not a valid graph :c.";
-        }
+        sb.append(this.validate()).append("\n");
 
         sb.append("Nodes: \n");
         for (Node node : nodes) {
@@ -75,7 +70,7 @@ class Graph {
         if (startNode != null) {
             sb.append("Start Node: ").append(startNode.getLabel()).append("\n");
         }
-        if (endNodes.length != 0) {
+        if (endNodes.size() != 0) {
             sb.append("End Nodes: \n");
         }
         for (Node endNode: endNodes) {
@@ -85,26 +80,80 @@ class Graph {
         return sb.toString();
     }
 
-    public String exportGraph(File fileToSave) { //todo move this here
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave))) {
+    public void exportGraph(File filePath) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             // Write nodes
             for (Node node : nodes) {
-                String type = "";
-                if (node.isStart) type += "START ";
-                if (node.isEnd) type += "END ";
-                writer.write(node.number + "," + node.x + "," + node.y + "," + type.trim());
+                String type = (node == startNode ? "START " : "") + (endNodes.contains(node) ? "END " : "");
+                writer.write("NODE," + node.number + "," + node.x + "," + node.y + "," + type.trim());
                 writer.newLine();
             }
 
             // Write edges
             for (Edge edge : edges) {
-                writer.write("EDGE," + edge.startNode + "," + edge.endNode);
+                String characters = String.join(",", edge.characters.stream().map(String::valueOf).toList());
+                writer.write("EDGE," + edge.startNode.number + "," + edge.endNode.number + "," + characters);
                 writer.newLine();
             }
 
-            return("Graph exported successfully!");
+            System.out.println("Graph exported successfully!");
         } catch (IOException e) {
-            return("Error exporting graph: " + e.getMessage());
+            System.err.println("Error exporting graph: " + e.getMessage());
         }
     }
+
+    public void importGraph(File filePath) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
+            nodes.clear();
+            edges.clear();
+            endNodes.clear();
+            startNode = null;
+
+            String line;
+            Map<Integer, Node> nodeMap = new HashMap<>();
+            this.currentNodeNumber = 0;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split(",");
+                if (parts[0].equals("NODE")) {
+                    int number = Integer.parseInt(parts[1]);
+                    int x = Integer.parseInt(parts[2]);
+                    int y = Integer.parseInt(parts[3]);
+                    Node node = new Node(x, y, number);
+                    this.currentNodeNumber++;
+
+                    // Determine node type
+                    if (parts.length > 4) {
+                        if (parts[4].contains("START")) {
+                            startNode = node;
+                            node.isStart = true;
+                        }
+                        if (parts[4].contains("END")) {
+                            endNodes.add(node);
+                            node.isEnd = true;
+                        }
+                    }
+                    nodes.add(node);
+                    nodeMap.put(number, node);
+                } else if (parts[0].equals("EDGE")) {
+                    int startNumber = Integer.parseInt(parts[1]);
+                    int endNumber = Integer.parseInt(parts[2]);
+                    Set<Character> characters = new LinkedHashSet<>();
+                    for (String c : parts[3].split(",")) {
+                        characters.add(c.charAt(0));
+                    }
+                    Edge edge = new Edge(nodeMap.get(startNumber), nodeMap.get(endNumber), characters);
+                    edges.add(edge);
+
+                    // Update node references
+                    nodeMap.get(startNumber).outgoingEdges.add(edge);
+                    nodeMap.get(endNumber).incomingEdges.add(edge);
+                }
+            }
+
+            System.out.println("Graph imported successfully!");
+        } catch (IOException | NumberFormatException e) {
+            System.err.println("Error importing graph: " + e.getMessage());
+        }
+    }
+
 }

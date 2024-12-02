@@ -33,7 +33,11 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
         this.add(topButtonPanel, BorderLayout.NORTH);
 
         this.add(startMinimizingButton, BorderLayout.SOUTH);
-
+        this.graph = new Graph();
+        graphStateTextArea = new JTextArea(20, 20);
+        graphStateTextArea.setEditable(false);
+        graphStateTextArea.setText(graph.getGraphState());  // Initialize with current state
+        scrollPane = new JScrollPane(graphStateTextArea);
         addMouseListener(this);
         addMouseMotionListener(this);
         exportButton.addActionListener(e -> exportGraph());
@@ -45,14 +49,7 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
             frame.revalidate();
             frame.repaint();
         });
-        this.graph = new Graph();
-        graphStateTextArea = new JTextArea(20, 20);
-        graphStateTextArea.setEditable(false);
-        graphStateTextArea.setText(graph.getGraphState());  // Initialize with current state
-        scrollPane = new JScrollPane(graphStateTextArea);
 
-        // Add the text area to the panel (assuming you use a layout manager like BorderLayout)
-        setLayout(new BorderLayout());
         add(scrollPane, BorderLayout.EAST);  // Add to the right side of the panel
 
     }
@@ -115,19 +112,27 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
                                 graph.startNode = null;
                             } else {
                                 node.isStart = true;
-                                graph.startNode.isStart = false;
+                                if (graph.startNode != null) graph.startNode.isStart = false;
                                 graph.startNode = node;
                             }
                             break;
                         case 1: //Toggle End Node
-                            node.isEnd = !node.isEnd;
+                            if (node.isEnd) {
+                                node.isEnd = false;
+                                graph.endNodes.remove(node);
+                            } else {
+                                node.isEnd = true;
+                                graph.endNodes.add(node);
+                            }
                             break;
                         case 2:     //delete Node
                             graph.nodes.remove(node);
                             for (Edge edge: node.incomingEdges) {
+                                edge.startNode.outgoingEdges.remove(edge);
                                 graph.edges.remove(edge);
                             }
                             for (Edge edge: node.outgoingEdges) {
+                                edge.endNode.incomingEdges.remove(edge);
                                 graph.edges.remove(edge);
                             }
                             repaint();
@@ -147,6 +152,8 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
 
                         switch (choice) {
                             case 0: // Delete Edge
+                                edge.startNode.outgoingEdges.remove(edge);
+                                edge.endNode.incomingEdges.remove(edge);
                                 graph.edges.remove(edge);
                                 repaint();
                                 break;
@@ -239,7 +246,7 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
                             Edge edge = new Edge(edgeStartNode, node, uniqueChars);
                             graph.edges.add(edge);
                             edgeStartNode.outgoingEdges.add(edge);
-                            node.outgoingEdges.add(edge);
+                            node.incomingEdges.add(edge);
                         }
                         break;
                     }
@@ -321,26 +328,7 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
 
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToSave = fileChooser.getSelectedFile();
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileToSave))) {
-                // Write nodes
-                for (Node node : graph.nodes) {
-                    String type = "";
-                    if (node == startNode) type += "START ";
-                    if (node == endNode) type += "END ";
-                    writer.write(node.number + "," + node.x + "," + node.y + "," + type.trim());
-                    writer.newLine();
-                }
-
-                // Write edges
-                for (Edge edge : graph.edges) {
-                    writer.write("EDGE," + edge.startNode + "," + edge.endNode);
-                    writer.newLine();
-                }
-
-                JOptionPane.showMessageDialog(this, "Graph exported successfully!");
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error exporting graph: " + e.getMessage());
-            }
+            graph.exportGraph(fileToSave);
         }
     }
 
@@ -351,47 +339,9 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
 
         if (userSelection == JFileChooser.APPROVE_OPTION) {
             File fileToImport = fileChooser.getSelectedFile();
-            try (BufferedReader reader = new BufferedReader(new FileReader(fileToImport))) {
-                graph.nodes.clear();  // Clear existing nodes
-                graph.edges.clear();  // Clear existing edges
-                startNode = null;  // Reset start node
-                endNode = null;  // Reset end node
-
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String[] parts = line.split(",");
-                    if (parts[0].equals("EDGE")) {
-                        int fromIndex = Integer.parseInt(parts[1]);
-                        int toIndex = Integer.parseInt(parts[2]);
-                        //graph.edges.add(new Edge{fromIndex, toIndex});  // Store edge
-                    } else {
-                        int number = Integer.parseInt(parts[0]);
-                        int x = Integer.parseInt(parts[1]);
-                        int y = Integer.parseInt(parts[2]);
-                        Node newNode = new Node(x, y, number);
-
-                        // Determine if the node is start or end
-                        if (parts.length > 3) {
-                            for (String type : parts[3].split(" ")) {
-                                if (type.equalsIgnoreCase("START")) {
-                                    startNode = newNode;
-                                }
-                                if (type.equalsIgnoreCase("END")) {
-                                    endNode = newNode;
-                                }
-                            }
-                        }
-                        graph.nodes.add(newNode);
-                        graph.currentNodeNumber++;
-                    }
-                }
-                repaint();
-                JOptionPane.showMessageDialog(this, "Graph imported successfully!");
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(this, "Error importing graph: " + e.getMessage());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Error in file format: " + e.getMessage());
-            }
+            graph.importGraph(fileToImport);
+            repaint();
+            updateGraphState();
         }
     }
 

@@ -13,3 +13,9 @@ public class Manager {
         frame.setVisible(true);
     }
 }
+
+//todo
+//repair export/import
+//finish validate
+//repair next screen button
+//start algorithm
