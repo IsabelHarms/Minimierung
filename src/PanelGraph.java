@@ -115,19 +115,27 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
                                 graph.startNode = null;
                             } else {
                                 node.isStart = true;
-                                graph.startNode.isStart = false;
+                                if (graph.startNode != null) graph.startNode.isStart = false;
                                 graph.startNode = node;
                             }
                             break;
                         case 1: //Toggle End Node
-                            node.isEnd = !node.isEnd;
+                            if (node.isEnd) {
+                                node.isEnd = false;
+                                graph.endNodes.remove(node);
+                            } else {
+                                node.isEnd = true;
+                                graph.endNodes.add(node);
+                            }
                             break;
                         case 2:     //delete Node
                             graph.nodes.remove(node);
                             for (Edge edge: node.incomingEdges) {
+                                edge.startNode.outgoingEdges.remove(edge);
                                 graph.edges.remove(edge);
                             }
                             for (Edge edge: node.outgoingEdges) {
+                                edge.endNode.incomingEdges.remove(edge);
                                 graph.edges.remove(edge);
                             }
                             repaint();
@@ -147,6 +155,8 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
 
                         switch (choice) {
                             case 0: // Delete Edge
+                                edge.startNode.outgoingEdges.remove(edge);
+                                edge.endNode.incomingEdges.remove(edge);
                                 graph.edges.remove(edge);
                                 repaint();
                                 break;
@@ -239,7 +249,7 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
                             Edge edge = new Edge(edgeStartNode, node, uniqueChars);
                             graph.edges.add(edge);
                             edgeStartNode.outgoingEdges.add(edge);
-                            node.outgoingEdges.add(edge);
+                            node.incomingEdges.add(edge);
                         }
                         break;
                     }

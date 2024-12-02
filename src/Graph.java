@@ -6,7 +6,7 @@ import java.util.*;
 
 class Graph {
     Node startNode;
-    Node[] endNodes;
+    List<Node> endNodes;
     public List<Node> nodes;
     public List<Edge> edges;
 
@@ -15,39 +15,37 @@ class Graph {
     public Graph() {
         nodes = new ArrayList<>();
         edges = new ArrayList<>();
-        endNodes = new Node[]{};
+        endNodes = new ArrayList<>();
     }
 
 
-    public boolean validate() {
+    public String validate() {
         for (Node node: nodes) {
             if (node.incomingEdges.size()==0 && node.outgoingEdges.size()==0) {
-                return false; //not connected
+                return "node " + node.getLabel() + " is not connected "; //not connected
             }
             if (node.outgoingEdges.size()==0 && !node.isEnd) {
-                return false; //dead end
+                return "node " + node.getLabel() + " is a dead end "; //dead end
             }
             if (node.incomingEdges.size()==0 && !node.isStart) {
-                return false; //not reachable
+                return "node " + node.getLabel() + " is not reachable "; //not reachable
             }
             Set<Character> seenCharacters = new HashSet<>();
-            for (Edge incomingEdge: node.incomingEdges) {
-                for (char c : incomingEdge.characters) {
+            for (Edge outgoingEdge: node.outgoingEdges) {
+                for (char c : outgoingEdge.characters) {
                     if (!seenCharacters.add(c)) {
-                        return false; // This character is a duplicate, therefore not deterministic
+                        return "multiple options from node " + node.getLabel() + " via character " + c; // This character is a duplicate, therefore not graph deterministic
                     }
                 }
             }
         }
-        return true;
-    } //todo check for other invalid characteristics
+        return "valid";
+    } //todo check for other invalid characteristics eg. z0-z1 z2-z3 and make 1 state possible
 
     public String getGraphState() {
         StringBuilder sb = new StringBuilder();
 
-        if (!this.validate()) {
-            return "unfortunately this is not a valid graph :c.";
-        }
+        sb.append(this.validate()).append("\n");
 
         sb.append("Nodes: \n");
         for (Node node : nodes) {
@@ -75,7 +73,7 @@ class Graph {
         if (startNode != null) {
             sb.append("Start Node: ").append(startNode.getLabel()).append("\n");
         }
-        if (endNodes.length != 0) {
+        if (endNodes.size() != 0) {
             sb.append("End Nodes: \n");
         }
         for (Node endNode: endNodes) {
