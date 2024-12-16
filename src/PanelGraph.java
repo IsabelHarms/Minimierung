@@ -4,11 +4,14 @@ import java.awt.event.*;
 import java.awt.geom.QuadCurve2D;
 import java.io.*;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Set;
 
-class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
+class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
+    //todo zustände mit pfeil auch sich selbst
+    // und pfeile mit kurve für hin und zurück
 
-    private Graph graph;
+    //private Graph graph;
 
     private Node selectedNode;
     private Node draggedNode;
@@ -21,36 +24,32 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
     JButton importButton = new JButton("Import Graph");
     JButton startMinimizingButton = new JButton("Start Minimizing");
 
-    private JTextArea graphStateTextArea;  // Text area to display the graph state
-    private JScrollPane scrollPane;  // To make the text area scrollable
-    public PanelGraph() {
-
-        setLayout(new BorderLayout());
-
+    //private JTextArea graphStateTextArea;  // Text area to display the graph state
+    //private JScrollPane scrollPane;  // To make the text area scrollable
+    public PanelGraph(Graph graph) {
+        super(graph);
         JPanel topButtonPanel = new JPanel();
         topButtonPanel.add(exportButton);
         topButtonPanel.add(importButton);
         this.add(topButtonPanel, BorderLayout.NORTH);
 
         this.add(startMinimizingButton, BorderLayout.SOUTH);
-        this.graph = new Graph();
-        graphStateTextArea = new JTextArea(20, 20);
-        graphStateTextArea.setEditable(false);
-        graphStateTextArea.setText(graph.getGraphState());  // Initialize with current state
-        scrollPane = new JScrollPane(graphStateTextArea);
         addMouseListener(this);
         addMouseMotionListener(this);
         exportButton.addActionListener(e -> exportGraph());
         importButton.addActionListener(e -> importGraph());
 
         startMinimizingButton.addActionListener(e -> {
+            if(!Objects.equals(graph.validate(), "valid")) {
+                return;
+            }
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
-            frame.setContentPane(new PanelMinimizing());
+            frame.setContentPane(new PanelMinimizing(graph));
             frame.revalidate();
             frame.repaint();
         });
 
-        add(scrollPane, BorderLayout.EAST);  // Add to the right side of the panel
+        //add(scrollPane, BorderLayout.EAST);  // Add to the right side of the panel
 
     }
 
@@ -60,31 +59,6 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
         if (edgeStartNode != null) {
             g.setColor(Color.GRAY);
             g.drawLine(edgeStartNode.x, edgeStartNode.y, tempX, tempY);
-        }
-        g.setColor(Color.BLACK);
-        for (Edge edge : graph.edges) {
-            int startX = edge.startNode.x;
-            int startY = edge.startNode.y;
-            int endX = edge.endNode.x;
-            int endY = edge.endNode.y;
-            if (edge.curved) {
-                int controlX = (startX + endX) / 2; // Example control point
-                int controlY = (startY + endY) / 2 - 50; // Adjust control point for curvature
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.draw(new QuadCurve2D.Float(startX, startY, controlX, controlY, endX, endY));
-            } else {
-                g.drawLine(startX, startY, endX, endY);
-            }
-            drawArrow(g,startX, startY, endX, endY);
-            //draw label
-            String label = edge.getLabel();
-            int labelX = (startX + endX) / 2;
-            int labelY = (startY + endY) / 2;
-            g.drawString(label, labelX, labelY);
-        }
-        for (Node node : graph.nodes) {
-            node.draw(g);
         }
     }
 
@@ -194,26 +168,13 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
             }
         } else {
     //mouse left pressed on node = move node
-            boolean nodeClicked = false;
             for (Node node : graph.nodes) {
                 if (node.contains(e.getX(), e.getY())) {
                     draggedNode = node;
-                    nodeClicked = true;
                     break;
                 }
             }
-            // If no node is clicked, check if an edge is clicked to toggle its curvature
-            if (!nodeClicked) {
-                for (Edge edge : graph.edges) {
-                    // Check if the left-click is close to an edge (using a helper function)
-                    if (isClickOnEdge(e.getX(), e.getY(), edge)) {
-                        edge.curved = !edge.curved; // Toggle the curvature state of the edge
-                        break;
-                    }
-                }
-            }
         }
-        //updateGraphState();
     }
 
     @Override
@@ -232,6 +193,7 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
 
     @Override
     public void mouseReleased(MouseEvent e) {
+        //todo if edge is bidirectional, curve them both
     //mouse release while drawing edge + end on node = finalize edge
         if (SwingUtilities.isRightMouseButton(e)) {
             if (edgeStartNode != null) {
@@ -276,35 +238,6 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
         graphStateTextArea.setText(graph.getGraphState());
     }
 
-    private void drawArrow(Graphics g, int x1, int y1, int x2, int y2) {
-        Graphics2D g2 = (Graphics2D) g;
-        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-
-        double dx = x2 - x1, dy = y2 - y1;
-        double distance = Math.sqrt(dx * dx + dy * dy);
-        double nodeRadius = 15; // Radius of the node
-
-        // Adjust end point to stop at the edge of the node
-        double adjustedX2 = x2 - (dx / distance) * nodeRadius;
-        double adjustedY2 = y2 - (dy / distance) * nodeRadius;
-
-        // Draw the line
-        g2.drawLine(x1, y1, (int) adjustedX2, (int) adjustedY2);
-
-        // Draw the arrowhead
-        double angle = Math.atan2(dy, dx);
-        int arrowLength = 10;
-        int arrowWidth = 6;
-
-        int arrowX1 = (int) (adjustedX2 - arrowLength * Math.cos(angle - Math.PI / 6));
-        int arrowY1 = (int) (adjustedY2 - arrowLength * Math.sin(angle - Math.PI / 6));
-        int arrowX2 = (int) (adjustedX2 - arrowLength * Math.cos(angle + Math.PI / 6));
-        int arrowY2 = (int) (adjustedY2 - arrowLength * Math.sin(angle + Math.PI / 6));
-
-        g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX1, arrowY1);
-        g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX2, arrowY2);
-    }
-
     // Helper method to determine if a click is near an edge
     private boolean isClickOnEdge(int px, int py, Edge edge) {
         int x1 = edge.startNode.x;
@@ -318,9 +251,6 @@ class PanelGraph extends JPanel implements MouseListener, MouseMotionListener {
 
         return distance <= 5; // Adjust buffer distance as necessary
     }
-
-
-
     private void exportGraph() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Specify a file to save");

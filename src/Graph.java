@@ -3,18 +3,25 @@ import java.util.*;
 
 class Graph {
     Node startNode;
-    List<Node> endNodes;
-    public List<Node> nodes;
-    public List<Edge> edges;
+    Set<Node> endNodes;
+    public Set<Node> nodes;
+    public Set<Edge> edges;
 
     int currentNodeNumber = 0;
 
     public Graph() {
-        nodes = new ArrayList<>();
-        edges = new ArrayList<>();
-        endNodes = new ArrayList<>();
+        nodes = new HashSet<>();
+        edges = new HashSet<>();
+        endNodes = new HashSet<>();
     }
 
+    public Set<Character> getAlphabet() {
+        Set<Character> alphabet = new LinkedHashSet<>();
+        for (Edge edge : edges) {
+            alphabet.addAll(edge.characters);
+        }
+        return alphabet;
+    }
 
     public String validate() {
         for (Node node: nodes) {
@@ -155,5 +162,4 @@ class Graph {
             System.err.println("Error importing graph: " + e.getMessage());
         }
     }
-
 }

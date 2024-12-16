@@ -4,7 +4,8 @@ import java.awt.*;
 public class Manager {
     public static void main(String[] args) {
         JFrame frame = new JFrame("Graph Builder");
-        PanelGraph panelGraph = new PanelGraph();
+        Graph graph = new Graph();
+        PanelGraph panelGraph = new PanelGraph(graph);
         panelGraph.setPreferredSize(new Dimension(800, 600));
 
         frame.add(panelGraph);
@@ -15,7 +16,5 @@ public class Manager {
 }
 
 //todo
-//repair export/import
 //finish validate
-//repair next screen button
 //start algorithm

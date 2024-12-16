@@ -28,7 +28,14 @@ class Node {
         return "Z" + number;
     }
 
-
+    public Node getNextState(char a) {
+        for (Edge edge: outgoingEdges) {
+            if (edge.characters.contains(a)) {
+                return edge.endNode;
+            }
+        }
+        return null;
+    }
     public void draw(Graphics g) {
         if (isStart && isEnd) {
             g.setColor(Color.BLUE);
