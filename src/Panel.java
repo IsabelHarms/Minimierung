@@ -10,9 +10,9 @@ import java.util.Objects;
 import java.util.Set;
 
 class Panel extends JPanel{
-    public Graph graph;
-    public JTextArea graphStateTextArea;  // Text area to display the graph state
-    public JScrollPane scrollPane;  // To make the text area scrollable
+    protected Graph graph;
+    protected JTextArea graphStateTextArea;  // Text area to display the graph state
+    protected JScrollPane scrollPane;  // To make the text area scrollable
     public Panel(Graph graph) {
 
         setLayout(new BorderLayout());
@@ -34,61 +34,118 @@ class Panel extends JPanel{
             int startY = edge.startNode.y;
             int endX = edge.endNode.x;
             int endY = edge.endNode.y;
+            int labelX = 0;
+            int labelY = 0;
             if (edge.curved) {
-                int controlX = (startX + endX) / 2; // Example control point
+                int controlX = (startX + endX) / 2 - 50; // Example control point
                 int controlY = (startY + endY) / 2 - 50; // Adjust control point for curvature
-                Graphics2D g2d = (Graphics2D) g;
-                g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g2d.draw(new QuadCurve2D.Float(startX, startY, controlX, controlY, endX, endY));
+                double t2 = 0.5;  // Stelle auf der Kurve, an der der Pfeil gezeichnet wird (nahe am Ende)
+                labelX = (int) ((1 - t2) * (1 - t2) * startX + 2 * (1 - t2) * t2 * controlX + t2 * t2 * endX);
+                labelY = (int) ((1 - t2) * (1 - t2) * startY + 2 * (1 - t2) * t2 * controlY + t2 * t2 * endY);
+
             } else {
-                g.drawLine(startX, startY, endX, endY);
+                labelX = (startX + endX) / 2;
+                labelY = (startY + endY) / 2;
             }
-            drawArrow(g,startX, startY, endX, endY);
+            drawArrowLine(g,startX, startY, endX, endY, edge.curved);
+            drawArrowHead(g,startX, startY, endX, endY, edge.curved);
             //draw label
             String label = edge.getLabel();
-            int labelX = (startX + endX) / 2;
-            int labelY = (startY + endY) / 2;
             g.drawString(label, labelX, labelY);
         }
-        for (Node node : graph.nodes) {
+        for (Node node : graph.getNodes()) {
             node.draw(g);
         }
     }
 
-
-    // Method to get the current state of the graph
-
-    // You can call this method to update the state in the text area whenever the graph changes
-    private void updateGraphState() {
+    protected void updateGraphState() {
         graphStateTextArea.setText(graph.getGraphState());
     }
 
-    private void drawArrow(Graphics g, int x1, int y1, int x2, int y2) {
+    protected void drawArrowLine(Graphics g, int startX, int startY, int endX, int endY, boolean curved) {
         Graphics2D g2 = (Graphics2D) g;
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-        double dx = x2 - x1, dy = y2 - y1;
+        double dx = endX - startX, dy = endY - startY;
         double distance = Math.sqrt(dx * dx + dy * dy);
         double nodeRadius = 15; // Radius of the node
 
         // Adjust end point to stop at the edge of the node
-        double adjustedX2 = x2 - (dx / distance) * nodeRadius;
-        double adjustedY2 = y2 - (dy / distance) * nodeRadius;
+        double adjustedX2 = endX - (dx / distance) * nodeRadius;
+        double adjustedY2 = endY - (dy / distance) * nodeRadius;
 
         // Draw the line
-        g2.drawLine(x1, y1, (int) adjustedX2, (int) adjustedY2);
+        if (curved) {
+            int controlX = (startX + endX) / 2 - 50; // Example control point
+            int controlY = (startY + endY) / 2 - 50; // Adjust control point for curvature
+            Graphics2D g2d = (Graphics2D) g;
+            g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2d.draw(new QuadCurve2D.Float(startX, startY, controlX, controlY, endX, endY));
 
-        // Draw the arrowhead
-        double angle = Math.atan2(dy, dx);
-        int arrowLength = 10;
-        int arrowWidth = 6;
+        }
+        else {
+            g2.drawLine(startX, startY, (int) adjustedX2, (int) adjustedY2);
+        }
 
-        int arrowX1 = (int) (adjustedX2 - arrowLength * Math.cos(angle - Math.PI / 6));
-        int arrowY1 = (int) (adjustedY2 - arrowLength * Math.sin(angle - Math.PI / 6));
-        int arrowX2 = (int) (adjustedX2 - arrowLength * Math.cos(angle + Math.PI / 6));
-        int arrowY2 = (int) (adjustedY2 - arrowLength * Math.sin(angle + Math.PI / 6));
+    }
 
-        g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX1, arrowY1);
-        g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX2, arrowY2);
+    protected void drawArrowHead(Graphics g, int startX, int startY, int endX, int endY, boolean curved) {
+        Graphics2D g2 = (Graphics2D) g;
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        double dx = endX - startX, dy = endY - startY;
+        double distance = Math.sqrt(dx * dx + dy * dy);
+        double nodeRadius = 15; // Radius of the node
+
+        // Adjust end point to stop at the edge of the node
+        double adjustedX2 = endX - (dx / distance) * nodeRadius;
+        double adjustedY2 = endY - (dy / distance) * nodeRadius;
+
+        // Draw the line
+        if (curved) { //todo also das is ja wohl katastrophal
+            // Bézier-Kurvenparameter t für die Position nahe dem Ende der Kurve
+            double t = 0.85; // Position des Pfeilkopfes nahe dem Endpunkt der Kurve
+
+            // Kontrollpunkt für die Bézier-Kurve
+            int controlX = (startX + endX) / 2;
+            int controlY = (startY + endY) / 2 - 50;
+
+            // Berechnung der Tangente für den Winkel an der Position t
+            double arrowX = 2 * (1 - t) * (controlX - startX) + 2 * t * (endX - controlX);
+            double arrowY = 2 * (1 - t) * (controlY - startY) + 2 * t * (endY - controlY);
+            double angle = Math.atan2(arrowY, arrowX);
+
+            // Berechnung des Pfeilkopfes
+            int arrowLength = 10;
+            int arrowWidth = 6;
+
+            // Position des Pfeilkopfes (x und y an der Kurve für t)
+            double curveX = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * controlX + t * t * endX;
+            double curveY = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * controlY + t * t * endY;
+
+            int arrowX1 = (int) (curveX - arrowLength * Math.cos(angle - Math.PI / 6));
+            int arrowY1 = (int) (curveY - arrowLength * Math.sin(angle - Math.PI / 6));
+            int arrowX2 = (int) (curveX - arrowLength * Math.cos(angle + Math.PI / 6));
+            int arrowY2 = (int) (curveY - arrowLength * Math.sin(angle + Math.PI / 6));
+
+            g2.drawLine((int) curveX, (int) curveY, arrowX1, arrowY1);
+            g2.drawLine((int) curveX, (int) curveY, arrowX2, arrowY2);
+        }
+        else {
+            // Draw the arrowhead
+            double angle = Math.atan2(dy, dx);
+            int arrowLength = 10;
+            int arrowWidth = 6;
+
+            int arrowX1 = (int) (adjustedX2 - arrowLength * Math.cos(angle - Math.PI / 6));
+            int arrowY1 = (int) (adjustedY2 - arrowLength * Math.sin(angle - Math.PI / 6));
+            int arrowX2 = (int) (adjustedX2 - arrowLength * Math.cos(angle + Math.PI / 6));
+            int arrowY2 = (int) (adjustedY2 - arrowLength * Math.sin(angle + Math.PI / 6));
+
+            g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX1, arrowY1);
+            g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX2, arrowY2);
+        }
+
+
     }
 }

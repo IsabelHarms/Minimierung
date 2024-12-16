@@ -2,10 +2,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 class PanelMinimizing extends Panel {
     public PanelMinimizing(Graph graph) {
@@ -30,8 +28,8 @@ class PanelMinimizing extends Panel {
         nextButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // For now, do nothing
                 minimize(graph);
+                repaint();;
             }
         });
     }
@@ -41,25 +39,24 @@ class PanelMinimizing extends Panel {
         int t = 2;
         List<Set<Node>> Q = new ArrayList<>();
         Set<Node> Q0 = new HashSet<>();
-        Set<Node> Q1 = new HashSet<>(graph.endNodes);
-        Set<Node> Q2 = new HashSet<>(graph.nodes);
+        Set<Node> Q1 = graph.endNodes;
+        Set<Node> Q2 = graph.getNodes(); //todo new hashset?
         Q2.removeAll(Q1);
         Q.add(Q0);
         Q.add(Q1);
         Q.add(Q2);
-        int j,i;
         Set<Character> alphabet = graph.getAlphabet();
         //(2)
         while (true) {
             boolean changed = false;
-            for (i = 1; i<= t; i++) {
+            for (int i = 1; i < t; i++) {
                 Set<Node> Qi = Q.get(i);
-                for (char a: alphabet) {
-                    for (j = 1; j<= t; j++) {
-                        //1.
+                for (char a : alphabet) {
+                    for (int j = 0; j < t; j++) {
                         Set<Node> Qj = Q.get(j);
-                        Set<Node> reachableStates = new HashSet<>();
 
+                        // Check for non-empty intersection (1.)
+                        Set<Node> reachableStates = new HashSet<>();
                         for (Node state : Qi) {
                             Node next = state.getNextState(a);
                             if (next != null && Qj.contains(next)) {
@@ -67,7 +64,8 @@ class PanelMinimizing extends Panel {
                             }
                         }
 
-                        if (!reachableStates.isEmpty() && reachableStates.size() < Qi.size()) { //todo das stimmt glaub ich nicht
+                        if (!reachableStates.isEmpty() && reachableStates.size() < Qi.size()) {
+                            // Refine the partition (2.)
                             Q.add(reachableStates);
                             Qi.removeAll(reachableStates);
                             t++;
@@ -79,8 +77,53 @@ class PanelMinimizing extends Panel {
             }
             if (!changed) break;
         }
-        //(3)
-        Graph minimalGraph = new Graph();
-        return minimalGraph;
+
+            // (3)
+            int i = 0;
+            for (Set<Node> partition : Q) {
+                System.out.println(partition);
+            }
+
+            Map<Set<Node>, Node> partitionToNewState = new HashMap<>();
+            int stateId = 0;
+
+            // Create new states for each partition
+            for (Set<Node> partition : Q) {
+                partitionToNewState.put(partition, new Node(stateId*100, stateId* 100, stateId++));
+            }
+
+            List<Edge> minimizedTransitions = new ArrayList<>();
+/*
+            // Generate transitions for the minimized DFA
+            for (Set<Node> partition : Q) {
+                Node newState = partitionToNewState.get(partition);
+                for (char symbol : alphabet) {
+                    Node representative = partition.iterator().next(); // Take any state as representative
+                    Node target = representative.getNextState(symbol);
+
+                    if (target != null) {
+                        // Find the partition containing the target state
+                        for (Set<Node> targetPartition : Q) {
+                            if (targetPartition.contains(target)) {
+                                Node targetNewState = partitionToNewState.get(targetPartition);
+                                minimizedTransitions.add(new Edge(newState, targetNewState, Collections.singleton(symbol)));
+                                break;
+                            }
+                        }
+                    }
+                }
+            }*/
+
+            // Create and return the minimized graph
+            Graph minimizedGraph = new Graph();
+            for (Node state : partitionToNewState.values()) {
+                minimizedGraph.addNode(state);
+            }
+            /*for (Edge e : minimizedTransitions) {
+                minimizedGraph.addEdge(e);
+            }*/
+        this.graph = minimizedGraph;
+        return minimizedGraph;
+
     }
 }

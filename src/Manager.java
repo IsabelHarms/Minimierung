@@ -14,7 +14,3 @@ public class Manager {
         frame.setVisible(true);
     }
 }
-
-//todo
-//finish validate
-//start algorithm

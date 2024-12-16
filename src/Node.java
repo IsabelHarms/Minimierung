@@ -36,6 +36,15 @@ class Node {
         }
         return null;
     }
+
+    public Edge connected(Node node) {
+        for (Edge edge: outgoingEdges) { //todo if same character set dont curve?
+            if (edge.endNode == node) {
+                return edge;
+            }
+        }
+        return null;
+    }
     public void draw(Graphics g) {
         if (isStart && isEnd) {
             g.setColor(Color.BLUE);

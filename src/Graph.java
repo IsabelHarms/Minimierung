@@ -4,7 +4,7 @@ import java.util.*;
 class Graph {
     Node startNode;
     Set<Node> endNodes;
-    public Set<Node> nodes;
+    private Set<Node> nodes;
     public Set<Edge> edges;
 
     int currentNodeNumber = 0;
@@ -13,6 +13,21 @@ class Graph {
         nodes = new HashSet<>();
         edges = new HashSet<>();
         endNodes = new HashSet<>();
+    }
+
+    public Set<Node> getNodes() {
+        return this.nodes;
+    }
+    public void addNode(Node node) {
+        this.nodes.add(node);
+    }
+
+    public void removeNode(Node node) {
+        this.nodes.remove(node);
+    }
+
+    public void addEdge(Edge edge) {
+        this.edges.add(edge);
     }
 
     public Set<Character> getAlphabet() {

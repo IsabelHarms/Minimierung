@@ -10,9 +10,6 @@ import java.util.Set;
 class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     //todo zustände mit pfeil auch sich selbst
     // und pfeile mit kurve für hin und zurück
-
-    //private Graph graph;
-
     private Node selectedNode;
     private Node draggedNode;
     private Node startNode;
@@ -23,9 +20,6 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     JButton exportButton = new JButton("Export Graph");
     JButton importButton = new JButton("Import Graph");
     JButton startMinimizingButton = new JButton("Start Minimizing");
-
-    //private JTextArea graphStateTextArea;  // Text area to display the graph state
-    //private JScrollPane scrollPane;  // To make the text area scrollable
     public PanelGraph(Graph graph) {
         super(graph);
         JPanel topButtonPanel = new JPanel();
@@ -66,12 +60,12 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e)) {
     //left mouse clicked = new node
-            graph.nodes.add(new Node(e.getX(), e.getY(), graph.currentNodeNumber++));
+            graph.getNodes().add(new Node(e.getX(), e.getY(), graph.currentNodeNumber++));
             repaint();
         } else if (SwingUtilities.isRightMouseButton(e)) {
     //right mouse clicked = edit node
             boolean nodeClicked = false;
-            for (Node node : graph.nodes) {
+            for (Node node : graph.getNodes()) {
                 if (node.contains(e.getX(), e.getY())) {
                     nodeClicked = true;
                     String[] options = {"Toggle Start", "Toggle End", "Delete Node"};
@@ -100,7 +94,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             }
                             break;
                         case 2:     //delete Node
-                            graph.nodes.remove(node);
+                            graph.removeNode(node);
                             for (Edge edge: node.incomingEdges) {
                                 edge.startNode.outgoingEdges.remove(edge);
                                 graph.edges.remove(edge);
@@ -158,7 +152,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public void mousePressed(MouseEvent e) {
     //mouse right pressed on node = start edge
         if (SwingUtilities.isRightMouseButton(e)) {
-            for (Node node : graph.nodes) {
+            for (Node node : graph.getNodes()) {
                 if (node.contains(e.getX(), e.getY())) {
                     edgeStartNode = node;
                     tempX = e.getX();
@@ -168,7 +162,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
             }
         } else {
     //mouse left pressed on node = move node
-            for (Node node : graph.nodes) {
+            for (Node node : graph.getNodes()) {
                 if (node.contains(e.getX(), e.getY())) {
                     draggedNode = node;
                     break;
@@ -197,7 +191,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     //mouse release while drawing edge + end on node = finalize edge
         if (SwingUtilities.isRightMouseButton(e)) {
             if (edgeStartNode != null) {
-                for (Node node : graph.nodes) {
+                for (Node node : graph.getNodes()) {
                     if (node.contains(e.getX(), e.getY()) && node != edgeStartNode) {
                         String input = JOptionPane.showInputDialog(this, "Enter label for the edge (single characters only):");
                         if (input != null && !input.isEmpty()) {
@@ -209,6 +203,11 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             graph.edges.add(edge);
                             edgeStartNode.outgoingEdges.add(edge);
                             node.incomingEdges.add(edge);
+                            if (node.connected(edgeStartNode) != null) {
+                                //Edge invertedEdge = node.connected(edgeStartNode);
+                                //invertedEdge.curved = true;
+                                edge.curved = true;
+                            }
                         }
                         break;
                     }
@@ -231,25 +230,16 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     @Override
     public void mouseExited(MouseEvent e) {}
 
-    // Method to get the current state of the graph
-
-    // You can call this method to update the state in the text area whenever the graph changes
-    private void updateGraphState() {
-        graphStateTextArea.setText(graph.getGraphState());
-    }
-
-    // Helper method to determine if a click is near an edge
     private boolean isClickOnEdge(int px, int py, Edge edge) {
         int x1 = edge.startNode.x;
         int y1 = edge.startNode.y;
         int x2 = edge.endNode.x;
         int y2 = edge.endNode.y;
 
-        // Simple distance check to see if the click is near the edge (with a buffer distance)
         double distance = Math.abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) /
                 Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
 
-        return distance <= 5; // Adjust buffer distance as necessary
+        return distance <= 5;
     }
     private void exportGraph() {
         JFileChooser fileChooser = new JFileChooser();
