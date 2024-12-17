@@ -45,7 +45,7 @@ class Graph {
             if (node.incomingEdges.size()==0 && node.outgoingEdges.size()==0) {
                 return "node " + node.getLabel() + " is not connected "; //not connected
             }
-            if (node.outgoingEdges.size()==0 && !node.isEnd) {
+            if (node.outgoingEdges.size()==0 && !node.isEnd) { //todo adjust for self connected
                 return "node " + node.getLabel() + " is a dead end "; //dead end
             }
             if (node.incomingEdges.size()==0 && !node.isStart) {

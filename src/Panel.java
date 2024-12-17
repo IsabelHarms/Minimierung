@@ -126,54 +126,64 @@ class Panel extends JPanel{
         double dx = endX - startX, dy = endY - startY;
         double distance = Math.sqrt(dx * dx + dy * dy);
 
-        // Adjust end point to stop at the edge of the node
-        double adjustedX2 = endX - (dx / distance) * NODE_RADIUS;
-        double adjustedY2 = endY - (dy / distance) * NODE_RADIUS;
-
-        // Bézier-Kurvenparameter t für die Position nahe dem Ende der Kurve
-        double t = 0.85; // Position des Pfeilkopfes nahe dem Endpunkt der Kurve
-
-        // Kontrollpunkt für die Bézier-Kurve
         int controlX = (startX + endX) / 2;
         int controlY = (startY + endY) / 2;
+        int offset = 50;
 
-        // Berechnung der Tangente für den Winkel an der Position t
-        double arrowX = 2 * (1 - t) * (controlX - startX) + 2 * t * (endX - controlX);
-        double arrowY = 2 * (1 - t) * (controlY - startY) + 2 * t * (endY - controlY);
-        double angle = Math.atan2(arrowY, arrowX);
-
-        // Berechnung des Pfeilkopfes
-        int arrowLength = 10;
-        int arrowWidth = 6;
-
-        // Position des Pfeilkopfes (x und y an der Kurve für t)
-        double curveX = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * controlX + t * t * endX;
-        double curveY = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * controlY + t * t * endY;
-
-        int arrowX1 = (int) (curveX - arrowLength * Math.cos(angle - Math.PI / 6));
-        int arrowY1 = (int) (curveY - arrowLength * Math.sin(angle - Math.PI / 6));
-        int arrowX2 = (int) (curveX - arrowLength * Math.cos(angle + Math.PI / 6));
-        int arrowY2 = (int) (curveY - arrowLength * Math.sin(angle + Math.PI / 6));
-
+        double t = 0.85;
+        double curveX = 0, curveY = 0;
+        double tangentX = 0, tangentY = 0;
 
         switch (arrowType) {
             case STRAIGHT:
-                g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX1, arrowY1);
-                g2.drawLine((int) adjustedX2, (int) adjustedY2, arrowX2, arrowY2);
+                curveX = endX - (dx / distance) * NODE_RADIUS;
+                curveY = endY - (dy / distance) * NODE_RADIUS;
+                tangentX = dx;
+                tangentY = dy;
                 break;
+
             case CURVE_LEFT:
-                g2.drawLine((int) curveX, (int) curveY, arrowX1, arrowY1);
-                g2.drawLine((int) curveX, (int) curveY, arrowX2, arrowY2);
-                break;
             case CURVE_RIGHT:
-                g2.drawLine((int) curveX, (int) curveY, arrowX1, arrowY1);
-                g2.drawLine((int) curveX, (int) curveY, arrowX2, arrowY2);
+                int curveOffset = (arrowType == ArrowType.CURVE_LEFT) ? -offset : offset;
+
+                curveX = (1 - t) * (1 - t) * startX + 2 * (1 - t) * t * (controlX + curveOffset) + t * t * endX;
+                curveY = (1 - t) * (1 - t) * startY + 2 * (1 - t) * t * (controlY + curveOffset) + t * t * endY;
+
+                tangentX = 2 * (1 - t) * ((controlX + curveOffset) - startX) + 2 * t * (endX - (controlX + curveOffset));
+                tangentY = 2 * (1 - t) * (controlY - startY) + 2 * t * (endY - controlY);
+
+                double tangentLength = Math.sqrt(tangentX * tangentX + tangentY * tangentY);
+                curveX = curveX - (tangentX / tangentLength) * NODE_RADIUS / 2;
+                curveY = curveY - (tangentY / tangentLength) * NODE_RADIUS / 2;
                 break;
+
             case SELF:
-                System.out.println("Der Pfeil zeigt auf sich selbst.");
+                double loopRadius = (2 * NODE_RADIUS) / 2;
+
+                curveX = startX + loopRadius * Math.cos(Math.toRadians(45)) - 5;
+                curveY = startY - loopRadius * Math.sin(Math.toRadians(45)) - 5;
+
+                tangentX = -0.5;
+                tangentY = 1;
                 break;
             default:
                 throw new IllegalStateException("Unbekannter ArrowType: " + arrowType);
         }
+
+        // Berechnung des Pfeilkopfes
+        double arrowAngle = Math.atan2(tangentY, tangentX);
+        int arrowLength = 10;
+        int arrowWidth = 6;
+
+        int arrowX1 = (int) (curveX - arrowLength * Math.cos(arrowAngle - Math.PI / 6));
+        int arrowY1 = (int) (curveY - arrowLength * Math.sin(arrowAngle - Math.PI / 6));
+        int arrowX2 = (int) (curveX - arrowLength * Math.cos(arrowAngle + Math.PI / 6));
+        int arrowY2 = (int) (curveY - arrowLength * Math.sin(arrowAngle + Math.PI / 6));
+
+        // Pfeilkopf zeichnen
+        g2.drawLine((int) curveX, (int) curveY, arrowX1, arrowY1);
+        g2.drawLine((int) curveX, (int) curveY, arrowX2, arrowY2);
     }
+
+
 }
