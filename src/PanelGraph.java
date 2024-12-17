@@ -3,13 +3,12 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.QuadCurve2D;
 import java.io.*;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
 
 class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
-    //todo zustände mit pfeil auch sich selbst
-    // und pfeile mit kurve für hin und zurück
     private Node selectedNode;
     private Node draggedNode;
     private Node startNode;
@@ -60,7 +59,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e)) {
     //left mouse clicked = new node
-            graph.getNodes().add(new Node(e.getX(), e.getY(), graph.currentNodeNumber++));
+            graph.getNodes().add(new Node(e.getX(), e.getY(), graph.currentNodeNumber++, 30));
             repaint();
         } else if (SwingUtilities.isRightMouseButton(e)) {
     //right mouse clicked = edit node
@@ -68,7 +67,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
             for (Node node : graph.getNodes()) {
                 if (node.contains(e.getX(), e.getY())) {
                     nodeClicked = true;
-                    String[] options = {"Toggle Start", "Toggle End", "Delete Node"};
+                    String[] options = {"Toggle Start", "Toggle End", "Delete Node", "Add Edge"};
                     int choice = JOptionPane.showOptionDialog(this, "Node Options",
                             "Choose Action", JOptionPane.DEFAULT_OPTION, JOptionPane.INFORMATION_MESSAGE,
                             null, options, options[0]);
@@ -105,6 +104,14 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             }
                             repaint();
                             break;
+                        case 3://add edge to self
+                            Edge edge = new Edge(node, node, Collections.singleton('a'));
+                            edge.arrowType = ArrowType.SELF;
+                            graph.addEdge(edge);
+                            node.incomingEdges.add(edge);
+                            node.outgoingEdges.add(edge);
+                            repaint();
+                            break;
                     }
                     repaint();
                     break;
@@ -119,7 +126,10 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                                 null, options, options[0]);
 
                         switch (choice) {
-                            case 0: // Delete Edge
+                            case 0: // Delete Edge todo curved edge hitbox
+                                if (edge.endNode.connected(edge.startNode) != null) {
+                                    edge.endNode.connected(edge.startNode).arrowType = ArrowType.STRAIGHT; //not bidirectional anymore
+                                }
                                 edge.startNode.outgoingEdges.remove(edge);
                                 edge.endNode.incomingEdges.remove(edge);
                                 graph.edges.remove(edge);
@@ -187,7 +197,6 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        //todo if edge is bidirectional, curve them both
     //mouse release while drawing edge + end on node = finalize edge
         if (SwingUtilities.isRightMouseButton(e)) {
             if (edgeStartNode != null) {
@@ -199,14 +208,20 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             for (char c : input.toCharArray()) {
                                 uniqueChars.add(c);
                             }
+                            if (edgeStartNode.connected(node) != null) {
+                                Edge existingEdge = edgeStartNode.connected(node); //could use a remove method
+                                graph.edges.remove(existingEdge);
+                                edgeStartNode.outgoingEdges.remove(existingEdge);
+                                node.incomingEdges.remove(existingEdge);
+                            }
                             Edge edge = new Edge(edgeStartNode, node, uniqueChars);
                             graph.edges.add(edge);
                             edgeStartNode.outgoingEdges.add(edge);
                             node.incomingEdges.add(edge);
                             if (node.connected(edgeStartNode) != null) {
-                                //Edge invertedEdge = node.connected(edgeStartNode);
-                                //invertedEdge.curved = true;
-                                edge.curved = true;
+                                Edge invertedEdge = node.connected(edgeStartNode);
+                                invertedEdge.arrowType = ArrowType.CURVE_LEFT;
+                                edge.arrowType = ArrowType.CURVE_RIGHT;
                             }
                         }
                         break;

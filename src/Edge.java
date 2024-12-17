@@ -3,17 +3,16 @@ import java.util.Set;
 class Edge {
     Node startNode, endNode;
     Set<Character> characters;
-
     String label;
 
-    boolean curved;
+    ArrowType arrowType;
 
     public Edge(Node startNode, Node endNode, Set<Character> characters) {
         this.startNode = startNode;
         this.endNode = endNode;
         this.characters = characters;
         this.setCharactersAndLabel(characters);
-        this.curved = false; // By default, edge is not curved
+        this.arrowType = ArrowType.STRAIGHT; // By default, edge is not curved
     }
 
     public String getLabel() {

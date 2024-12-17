@@ -37,10 +37,10 @@ class PanelMinimizing extends Panel {
     private Graph minimize(Graph graph) {
         //(1)
         int t = 2;
-        List<Set<Node>> Q = new ArrayList<>();
+        List<Set<Node>> Q = new ArrayList<>(new HashSet<>());
         Set<Node> Q0 = new HashSet<>();
-        Set<Node> Q1 = graph.endNodes;
-        Set<Node> Q2 = graph.getNodes(); //todo new hashset?
+        Set<Node> Q1 = new HashSet<>(graph.endNodes);
+        Set<Node> Q2 = new HashSet<>(graph.getNodes());
         Q2.removeAll(Q1);
         Q.add(Q0);
         Q.add(Q1);
@@ -59,13 +59,14 @@ class PanelMinimizing extends Panel {
                         Set<Node> reachableStates = new HashSet<>();
                         for (Node state : Qi) {
                             Node next = state.getNextState(a);
+                            System.out.println(next);
                             if (next != null && Qj.contains(next)) {
                                 reachableStates.add(state);
                             }
                         }
-
                         if (!reachableStates.isEmpty() && reachableStates.size() < Qi.size()) {
                             // Refine the partition (2.)
+
                             Q.add(reachableStates);
                             Qi.removeAll(reachableStates);
                             t++;
@@ -89,7 +90,7 @@ class PanelMinimizing extends Panel {
 
             // Create new states for each partition
             for (Set<Node> partition : Q) {
-                partitionToNewState.put(partition, new Node(stateId*100, stateId* 100, stateId++));
+                partitionToNewState.put(partition, new Node(stateId*100, stateId* 100, stateId++, 30));
             }
 
             List<Edge> minimizedTransitions = new ArrayList<>();

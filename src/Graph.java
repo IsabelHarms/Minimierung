@@ -2,6 +2,7 @@ import java.io.*;
 import java.util.*;
 
 class Graph {
+    static final int NODE_RADIUS = 30;
     Node startNode;
     Set<Node> endNodes;
     private Set<Node> nodes;
@@ -32,6 +33,7 @@ class Graph {
 
     public Set<Character> getAlphabet() {
         Set<Character> alphabet = new LinkedHashSet<>();
+        alphabet.add('ε');
         for (Edge edge : edges) {
             alphabet.addAll(edge.characters);
         }
@@ -83,11 +85,7 @@ class Graph {
         }
 
         sb.append("\nAlphabet: \n");
-        Set<Character> alphabet = new LinkedHashSet<>();
-        for (Edge edge : edges) {
-            alphabet.addAll(edge.characters);
-        }
-        sb.append("  ").append(String.join(",", alphabet.toString())).append("\n");
+        sb.append("  ").append(String.join(",", getAlphabet().toString())).append("\n");
 
         if (startNode != null) {
             sb.append("Start Node: ").append(startNode.getLabel()).append("\n");
@@ -140,7 +138,7 @@ class Graph {
                     int number = Integer.parseInt(parts[1]);
                     int x = Integer.parseInt(parts[2]);
                     int y = Integer.parseInt(parts[3]);
-                    Node node = new Node(x, y, number);
+                    Node node = new Node(x, y, number, NODE_RADIUS);
                     this.currentNodeNumber++;
 
                     // Determine node type
