@@ -93,23 +93,29 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             }
                             break;
                         case 2:     //delete Node
-                            graph.removeNode(node);
                             for (Edge edge: node.incomingEdges) {
-                                edge.startNode.outgoingEdges.remove(edge);
-                                graph.edges.remove(edge);
+                                graph.removeEdge(edge);
                             }
                             for (Edge edge: node.outgoingEdges) {
-                                edge.endNode.incomingEdges.remove(edge);
-                                graph.edges.remove(edge);
+                                graph.removeEdge(edge);
                             }
+                            graph.removeNode(node);
                             repaint();
                             break;
                         case 3://add edge to self
-                            Edge edge = new Edge(node, node, Collections.singleton('a'));
-                            edge.arrowType = ArrowType.SELF;
-                            graph.addEdge(edge);
-                            node.incomingEdges.add(edge);
-                            node.outgoingEdges.add(edge);
+                            String input = JOptionPane.showInputDialog(this, "Enter label for the edge (single characters only):");
+                            if (input != null && !input.isEmpty()) {
+                                Set<Character> uniqueChars = new LinkedHashSet<>();
+                                for (char c : input.toCharArray()) {
+                                    uniqueChars.add(c);
+                                }
+                                if (node.connected(node) != null) {
+                                    graph.removeEdge(node.connected(node));
+                                }
+                                Edge edge = new Edge(node, node, uniqueChars);
+                                edge.arrowType = ArrowType.SELF;
+                                graph.addEdge(edge);
+                            }
                             repaint();
                             break;
                     }
@@ -118,7 +124,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                 }
             }
             if (!nodeClicked) {
-                for (Edge edge : graph.edges) {
+                for (Edge edge : graph.getEdges()) {
                     if (isClickOnEdge(e.getX(), e.getY(), edge)) {
                         String[] options = {"Delete Edge", "Edit Characters"};
                         int choice = JOptionPane.showOptionDialog(this, "Edge Options",
@@ -130,9 +136,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                                 if (edge.endNode.connected(edge.startNode) != null) {
                                     edge.endNode.connected(edge.startNode).arrowType = ArrowType.STRAIGHT; //not bidirectional anymore
                                 }
-                                edge.startNode.outgoingEdges.remove(edge);
-                                edge.endNode.incomingEdges.remove(edge);
-                                graph.edges.remove(edge);
+                                graph.removeEdge(edge);
                                 repaint();
                                 break;
                             case 1: // Edit Label
@@ -209,15 +213,10 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                                 uniqueChars.add(c);
                             }
                             if (edgeStartNode.connected(node) != null) {
-                                Edge existingEdge = edgeStartNode.connected(node); //could use a remove method
-                                graph.edges.remove(existingEdge);
-                                edgeStartNode.outgoingEdges.remove(existingEdge);
-                                node.incomingEdges.remove(existingEdge);
+                                graph.removeEdge(edgeStartNode.connected(node));
                             }
                             Edge edge = new Edge(edgeStartNode, node, uniqueChars);
-                            graph.edges.add(edge);
-                            edgeStartNode.outgoingEdges.add(edge);
-                            node.incomingEdges.add(edge);
+                            graph.addEdge(edge);
                             if (node.connected(edgeStartNode) != null) {
                                 Edge invertedEdge = node.connected(edgeStartNode);
                                 invertedEdge.arrowType = ArrowType.CURVE_LEFT;
@@ -251,11 +250,65 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
         int x2 = edge.endNode.x;
         int y2 = edge.endNode.y;
 
+        switch (edge.arrowType) {
+            case STRAIGHT:
+                return isPointNearLine(px, py, x1, y1, x2, y2, 5);
+
+            case CURVE_LEFT:
+            case CURVE_RIGHT:
+                return isPointNearCurve(px, py, x1, y1, x2, y2, edge.arrowType, 5);
+
+            case SELF:
+                return isPointNearCircle(px, py, x1, y1, NODE_RADIUS / 2, 5);
+
+            default:
+                return false;
+        }
+    }
+
+
+    private boolean isPointNearLine(int px, int py, int x1, int y1, int x2, int y2, double tolerance) {
         double distance = Math.abs((y2 - y1) * px - (x2 - x1) * py + x2 * y1 - y2 * x1) /
                 Math.sqrt((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
-
-        return distance <= 5;
+        return distance <= tolerance;
     }
+
+
+    private boolean isPointNearCurve(int px, int py, int x1, int y1, int x2, int y2, ArrowType type, double tolerance) {
+        int controlX, controlY;
+
+        // Kontrollpunkt für die Kurve bestimmen
+        int midX = (x1 + x2) / 2;
+        int midY = (y1 + y2) / 2;
+        int offset = (int) (Math.hypot(x2 - x1, y2 - y1) / 4);
+
+        if (type == ArrowType.CURVE_LEFT) {
+            controlX = midX - offset;
+            controlY = midY - offset;
+        } else { // CURVE_RIGHT
+            controlX = midX + offset;
+            controlY = midY + offset;
+        }
+
+        // Punkte auf der Bézierkurve approximieren
+        for (double t = 0; t <= 1; t += 0.01) {
+            int bx = (int) ((1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * controlX + t * t * x2);
+            int by = (int) ((1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * controlY + t * t * y2);
+
+            double distance = Math.hypot(px - bx, py - by);
+            if (distance <= tolerance) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private boolean isPointNearCircle(int px, int py, int centerX, int centerY, int radius, double tolerance) {
+        double distance = Math.abs(Math.hypot(px - centerX, py - centerY) - radius);
+        return distance <= tolerance;
+    }
+
     private void exportGraph() {
         JFileChooser fileChooser = new JFileChooser();
         fileChooser.setDialogTitle("Specify a file to save");

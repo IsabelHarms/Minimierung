@@ -30,7 +30,7 @@ class Panel extends JPanel{
     protected void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setColor(Color.BLACK);
-        for (Edge edge : graph.edges) {
+        for (Edge edge : graph.getEdges()) {
             int startX = edge.startNode.x;
             int startY = edge.startNode.y;
             int endX = edge.endNode.x;

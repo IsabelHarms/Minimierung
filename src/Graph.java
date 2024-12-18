@@ -6,7 +6,7 @@ class Graph {
     Node startNode;
     Set<Node> endNodes;
     private Set<Node> nodes;
-    public Set<Edge> edges;
+    private Set<Edge> edges;
 
     int currentNodeNumber = 0;
 
@@ -27,8 +27,18 @@ class Graph {
         this.nodes.remove(node);
     }
 
+    public Set<Edge> getEdges() {
+        return this.edges;
+    }
     public void addEdge(Edge edge) {
+        edge.startNode.outgoingEdges.add(edge);
+        edge.endNode.incomingEdges.add(edge);
         this.edges.add(edge);
+    }
+    public void removeEdge(Edge edge) {
+        edge.startNode.outgoingEdges.remove(edge);
+        edge.endNode.incomingEdges.remove(edge);
+        this.edges.remove(edge);
     }
 
     public Set<Character> getAlphabet() {
