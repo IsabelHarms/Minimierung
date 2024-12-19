@@ -118,7 +118,8 @@ class Graph {
             // Write edges
             for (Edge edge : edges) {
                 String characters = String.join(",", edge.characters.stream().map(String::valueOf).toList());
-                writer.write("EDGE," + edge.startNode.number + "," + edge.endNode.number + "," + characters);
+                writer.write("EDGE," + edge.startNode.number + "," + edge.endNode.number + ","
+                        + characters + "," + edge.arrowType);
                 writer.newLine();
             }
 
@@ -167,7 +168,8 @@ class Graph {
                     for (String c : parts[3].split(",")) {
                         characters.add(c.charAt(0));
                     }
-                    Edge edge = new Edge(nodeMap.get(startNumber), nodeMap.get(endNumber), characters, ArrowType.STRAIGHT);
+                    ArrowType arrowType = ArrowType.valueOf(parts[4]);
+                    Edge edge = new Edge(nodeMap.get(startNumber), nodeMap.get(endNumber), characters, arrowType);
                     edges.add(edge);
 
                     // Update node references
