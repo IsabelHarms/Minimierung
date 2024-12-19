@@ -104,19 +104,21 @@ class PanelMinimizing extends Panel {
             //add edge if new, add characters if old
             for (Edge incomingEdge : node.incomingEdges) {
                 if (incomingEdge.startNode.connected(newNode) != null) {
-                    incomingEdge.startNode.connected(newNode).characters.addAll(incomingEdge.characters); //todo
-                }
-                else {
-                    Edge newEdge = new Edge(incomingEdge.startNode, newNode,incomingEdge.characters, incomingEdge.arrowType);
+                    incomingEdge.startNode.connected(newNode).characters.addAll(incomingEdge.characters); // merge characters
+                    incomingEdge.startNode.connected(newNode).setCharactersAndLabel(
+                            incomingEdge.startNode.connected(newNode).characters); // update label
+                } else {
+                    Edge newEdge = new Edge(incomingEdge.startNode, newNode, incomingEdge.characters, incomingEdge.arrowType);
                     graph.addEdge(newEdge);
                 }
             }
             for (Edge outgoingEdge : node.outgoingEdges) {
                 if (newNode.connected(outgoingEdge.endNode) != null) {
-                    newNode.connected(outgoingEdge.endNode).characters.addAll(outgoingEdge.characters);
-                }
-                else {
-                    Edge newEdge = new Edge(newNode, outgoingEdge.endNode,outgoingEdge.characters, outgoingEdge.arrowType);
+                    newNode.connected(outgoingEdge.endNode).characters.addAll(outgoingEdge.characters); // merge characters
+                    newNode.connected(outgoingEdge.endNode).setCharactersAndLabel(
+                            newNode.connected(outgoingEdge.endNode).characters); // update label
+                } else {
+                    Edge newEdge = new Edge(newNode, outgoingEdge.endNode, outgoingEdge.characters, outgoingEdge.arrowType);
                     graph.addEdge(newEdge);
                 }
             }
@@ -133,6 +135,5 @@ class PanelMinimizing extends Panel {
         newNode.y = y/ nodes.size();
         newNode.setLabel(labelBuilder.toString());
         graph.addNode(newNode);
-
     }
 }

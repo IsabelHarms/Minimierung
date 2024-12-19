@@ -15,6 +15,6 @@ public class Manager {
     }
 }
 
-//todo fix alphabet when minimizing
+//todo fix self edges
 //todo make states movable even after minimizing?
 // todo test more complex examples
