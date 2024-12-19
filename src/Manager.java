@@ -14,6 +14,3 @@ public class Manager {
         frame.setVisible(true);
     }
 }
-
-//todo self edge hitbox (and curve)
-//fix validate

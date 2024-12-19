@@ -28,13 +28,13 @@ class PanelMinimizing extends Panel {
         nextButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                minimize(graph);
+                minimizeStepByStep(getPartitions()); //todo only one partition at a time, then repaint
                 repaint();;
             }
         });
     }
 
-    private Graph minimize(Graph graph) {
+    private List<Set<Node>> getPartitions() {
         //(1)
         int t = 2;
         List<Set<Node>> Q = new ArrayList<>(new HashSet<>());
@@ -49,7 +49,7 @@ class PanelMinimizing extends Panel {
         //(2)
         while (true) {
             boolean changed = false;
-            for (int i = 1; i < t; i++) {
+            for (int i = 1; i <= t; i++) {
                 Set<Node> Qi = Q.get(i);
                 for (char a : alphabet) {
                     for (int j = 0; j < t; j++) {
@@ -59,7 +59,6 @@ class PanelMinimizing extends Panel {
                         Set<Node> reachableStates = new HashSet<>();
                         for (Node state : Qi) {
                             Node next = state.getNextState(a);
-                            System.out.println(next);
                             if (next != null && Qj.contains(next)) {
                                 reachableStates.add(state);
                             }
@@ -78,53 +77,52 @@ class PanelMinimizing extends Panel {
             }
             if (!changed) break;
         }
+        return Q;
+    }
 
-            // (3)
-            int i = 0;
-            for (Set<Node> partition : Q) {
-                System.out.println(partition);
+    private void minimizeStepByStep(List<Set<Node>> Partitions) {
+        // Generate transitions for the minimized DFA
+        for (Set<Node> partition : Partitions) {
+            if(partition.size()!= 0) {
+                mergeNodes(partition);
+                repaint();
             }
+        }
+    }
 
-            Map<Set<Node>, Node> partitionToNewState = new HashMap<>();
-            int stateId = 0;
-
-            // Create new states for each partition
-            for (Set<Node> partition : Q) {
-                partitionToNewState.put(partition, new Node(stateId*100, stateId* 100, stateId++, 30));
-            }
-
-            List<Edge> minimizedTransitions = new ArrayList<>();
-/*
-            // Generate transitions for the minimized DFA
-            for (Set<Node> partition : Q) {
-                Node newState = partitionToNewState.get(partition);
-                for (char symbol : alphabet) {
-                    Node representative = partition.iterator().next(); // Take any state as representative
-                    Node target = representative.getNextState(symbol);
-
-                    if (target != null) {
-                        // Find the partition containing the target state
-                        for (Set<Node> targetPartition : Q) {
-                            if (targetPartition.contains(target)) {
-                                Node targetNewState = partitionToNewState.get(targetPartition);
-                                minimizedTransitions.add(new Edge(newState, targetNewState, Collections.singleton(symbol)));
-                                break;
-                            }
-                        }
-                    }
+    public void mergeNodes(Set<Node> nodes) {
+        int x = 0;
+        int y = 0;
+        Node newNode = new Node(x,y,++graph.currentNodeNumber, NODE_RADIUS);
+        for(Node node: nodes) {
+            //averages of x and y as coordinates
+                x += node.x;
+                y += node.y;
+            //add edge if new, add characters if old
+            for (Edge incomingEdge : node.incomingEdges) {
+                if (incomingEdge.startNode.connected(newNode) != null) {
+                    incomingEdge.startNode.connected(newNode).characters.addAll(incomingEdge.characters); //todo
                 }
-            }*/
-
-            // Create and return the minimized graph
-            Graph minimizedGraph = new Graph();
-            for (Node state : partitionToNewState.values()) {
-                minimizedGraph.addNode(state);
+                else {
+                    Edge newEdge = new Edge(incomingEdge.startNode, newNode,incomingEdge.characters, incomingEdge.arrowType);
+                    graph.addEdge(newEdge);
+                }
             }
-            /*for (Edge e : minimizedTransitions) {
-                minimizedGraph.addEdge(e);
-            }*/
-        this.graph = minimizedGraph;
-        return minimizedGraph;
+            for (Edge outgoingEdge : node.outgoingEdges) {
+                if (newNode.connected(outgoingEdge.endNode) != null) {
+                    newNode.connected(outgoingEdge.endNode).characters.addAll(outgoingEdge.characters);
+                }
+                else {
+                    Edge newEdge = new Edge(newNode, outgoingEdge.endNode,outgoingEdge.characters, outgoingEdge.arrowType);
+                    graph.addEdge(newEdge);
+                }
+            }
+            graph.removeNode(node);
+        }
+        //set node to average position of nodes in partition
+        newNode.x = x/ nodes.size();
+        newNode.y = y/ nodes.size();
+        graph.addNode(newNode);
 
     }
 }

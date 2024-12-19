@@ -7,12 +7,12 @@ class Edge {
 
     ArrowType arrowType;
 
-    public Edge(Node startNode, Node endNode, Set<Character> characters) {
+    public Edge(Node startNode, Node endNode, Set<Character> characters, ArrowType arrowType) {
         this.startNode = startNode;
         this.endNode = endNode;
         this.characters = characters;
         this.setCharactersAndLabel(characters);
-        this.arrowType = ArrowType.STRAIGHT; // By default, edge is not curved
+        this.arrowType = arrowType; // By default, edge is not curved
     }
 
     public String getLabel() {

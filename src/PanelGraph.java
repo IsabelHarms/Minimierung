@@ -3,10 +3,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.QuadCurve2D;
 import java.io.*;
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     private Node selectedNode;
@@ -41,9 +38,6 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
             frame.revalidate();
             frame.repaint();
         });
-
-        //add(scrollPane, BorderLayout.EAST);  // Add to the right side of the panel
-
     }
 
     @Override
@@ -93,10 +87,10 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             }
                             break;
                         case 2:     //delete Node
-                            for (Edge edge: node.incomingEdges) {
+                            for (Edge edge: new ArrayList<>(node.incomingEdges)) {
                                 graph.removeEdge(edge);
                             }
-                            for (Edge edge: node.outgoingEdges) {
+                            for (Edge edge: new ArrayList<>(node.outgoingEdges)) {
                                 graph.removeEdge(edge);
                             }
                             graph.removeNode(node);
@@ -112,8 +106,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                                 if (node.connected(node) != null) {
                                     graph.removeEdge(node.connected(node));
                                 }
-                                Edge edge = new Edge(node, node, uniqueChars);
-                                edge.arrowType = ArrowType.SELF;
+                                Edge edge = new Edge(node, node, uniqueChars, ArrowType.SELF);
                                 graph.addEdge(edge);
                             }
                             repaint();
@@ -215,7 +208,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                             if (edgeStartNode.connected(node) != null) {
                                 graph.removeEdge(edgeStartNode.connected(node));
                             }
-                            Edge edge = new Edge(edgeStartNode, node, uniqueChars);
+                            Edge edge = new Edge(edgeStartNode, node, uniqueChars, ArrowType.STRAIGHT);
                             graph.addEdge(edge);
                             if (node.connected(edgeStartNode) != null) {
                                 Edge invertedEdge = node.connected(edgeStartNode);

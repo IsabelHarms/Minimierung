@@ -25,11 +25,11 @@ class Node {
         this.y = y;
         this.radius = radius;
         this.number = number;
-        Edge epsilonEdge = new Edge(this, this, Collections.singleton('ε'));
+        Edge epsilonEdge = new Edge(this, this, Collections.singleton('ε'), ArrowType.SELF);
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
-        //incomingEdges.add(epsilonEdge); todo hmmm maybe dont do this for now, as it breaks everything
-        //outgoingEdges.add(epsilonEdge);
+        incomingEdges.add(epsilonEdge);
+        outgoingEdges.add(epsilonEdge);
     }
 
     public String getLabel() {
@@ -43,6 +43,24 @@ class Node {
             }
         }
         return null;
+    }
+
+    public boolean hasPredecessor() {
+        for(Edge edge: incomingEdges) {
+            if (edge.startNode != this) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean hasSuccessor() {
+        for(Edge edge: outgoingEdges) {
+            if (edge.endNode != this) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public Edge connected(Node node) {

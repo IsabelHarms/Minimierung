@@ -43,7 +43,6 @@ class Graph {
 
     public Set<Character> getAlphabet() {
         Set<Character> alphabet = new LinkedHashSet<>();
-        alphabet.add('ε');
         for (Edge edge : edges) {
             alphabet.addAll(edge.characters);
         }
@@ -52,13 +51,10 @@ class Graph {
 
     public String validate() {
         for (Node node: nodes) {
-            if (node.incomingEdges.size()==0 && node.outgoingEdges.size()==0) {
+            if (!node.hasPredecessor() && !node.hasSuccessor()) {
                 return "node " + node.getLabel() + " is not connected "; //not connected
             }
-            if (node.outgoingEdges.size()==0 && !node.isEnd) { //todo adjust for self connected
-                return "node " + node.getLabel() + " is a dead end "; //dead end
-            }
-            if (node.incomingEdges.size()==0 && !node.isStart) {
+            if (!node.hasPredecessor() && !node.isStart) {
                 return "node " + node.getLabel() + " is not reachable "; //not reachable
             }
             Set<Character> seenCharacters = new HashSet<>();
@@ -171,7 +167,7 @@ class Graph {
                     for (String c : parts[3].split(",")) {
                         characters.add(c.charAt(0));
                     }
-                    Edge edge = new Edge(nodeMap.get(startNumber), nodeMap.get(endNumber), characters);
+                    Edge edge = new Edge(nodeMap.get(startNumber), nodeMap.get(endNumber), characters, ArrowType.STRAIGHT);
                     edges.add(edge);
 
                     // Update node references
