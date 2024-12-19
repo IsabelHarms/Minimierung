@@ -1,7 +1,5 @@
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
 
 class Node {
@@ -77,6 +75,16 @@ class Node {
             }
         }
         return null;
+    }
+
+    public void nextNodesRecursive(Set<Node> reachedNodes) {
+        for (Edge outgoingEdge: outgoingEdges) {
+            Node node = outgoingEdge.endNode;
+            if (!reachedNodes.contains(node)) {
+                reachedNodes.add(node);
+                node.nextNodesRecursive(reachedNodes);
+            }
+        }
     }
     public void draw(Graphics g) {
         if (isStart && isEnd) {

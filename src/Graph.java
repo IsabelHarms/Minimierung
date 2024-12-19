@@ -50,6 +50,14 @@ class Graph {
     }
 
     public String validate() {
+        if (nodes.size()==0) {
+            return "start building or import your graph.";
+        }
+        if (nodes.size()==1) {
+            Node singleNode = nodes.iterator().next();
+            if (singleNode.isStart && singleNode.isEnd && getAlphabet().size() > 0) return "valid";
+        }
+
         for (Node node: nodes) {
             if (!node.hasPredecessor() && !node.hasSuccessor()) {
                 return "node " + node.getLabel() + " is not connected "; //not connected
@@ -68,9 +76,18 @@ class Graph {
                     }
                 }
             }
+            if (!isConnected()) return "graph is not connected";
         }
         return "valid";
-    } //todo check for other invalid characteristics eg. z0-z1 z2-z3 and make 1 state possible
+    }
+
+    private boolean isConnected() {
+        Set<Node> reachableNodes = new HashSet<>();
+        startNode.nextNodesRecursive(reachableNodes);
+        return reachableNodes.size() == nodes.size();
+    }
+
+
 
     public String getGraphState() {
         StringBuilder sb = new StringBuilder();
