@@ -10,6 +10,8 @@ class Node {
     int radius;
     int number;
 
+    String label;
+
     boolean isStart;
 
     boolean isEnd;
@@ -25,6 +27,7 @@ class Node {
         this.y = y;
         this.radius = radius;
         this.number = number;
+        this.label = "Z" + number;
         Edge epsilonEdge = new Edge(this, this, Collections.singleton('ε'), ArrowType.SELF);
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
@@ -33,7 +36,11 @@ class Node {
     }
 
     public String getLabel() {
-        return "Z" + number;
+        return label;
+    }
+
+    public void setLabel(String label) {
+        this.label = label;
     }
 
     public Node getNextState(char a) {

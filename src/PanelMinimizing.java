@@ -81,7 +81,6 @@ class PanelMinimizing extends Panel {
     }
 
     private void minimizeStepByStep(List<Set<Node>> Partitions) {
-        // Generate transitions for the minimized DFA
         for (Set<Node> partition : Partitions) {
             if(partition.size()!= 0) {
                 mergeNodes(partition);
@@ -93,8 +92,12 @@ class PanelMinimizing extends Panel {
     public void mergeNodes(Set<Node> nodes) {
         int x = 0;
         int y = 0;
+        StringBuilder labelBuilder = new StringBuilder();
         Node newNode = new Node(x,y,++graph.currentNodeNumber, NODE_RADIUS);
         for(Node node: nodes) {
+            if (node.isStart) newNode.isStart = true;
+            if (node.isEnd) newNode.isEnd = true;
+            labelBuilder.append(node.label);
             //averages of x and y as coordinates
                 x += node.x;
                 y += node.y;
@@ -117,11 +120,18 @@ class PanelMinimizing extends Panel {
                     graph.addEdge(newEdge);
                 }
             }
+            for (Edge edge: new ArrayList<>(node.incomingEdges)) {
+                graph.removeEdge(edge);
+            }
+            for (Edge edge: new ArrayList<>(node.outgoingEdges)) {
+                graph.removeEdge(edge);
+            }
             graph.removeNode(node);
         }
         //set node to average position of nodes in partition
         newNode.x = x/ nodes.size();
         newNode.y = y/ nodes.size();
+        newNode.setLabel(labelBuilder.toString());
         graph.addNode(newNode);
 
     }

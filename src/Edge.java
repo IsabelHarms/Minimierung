@@ -1,3 +1,4 @@
+import java.util.HashSet;
 import java.util.Set;
 
 class Edge {
@@ -10,9 +11,8 @@ class Edge {
     public Edge(Node startNode, Node endNode, Set<Character> characters, ArrowType arrowType) {
         this.startNode = startNode;
         this.endNode = endNode;
-        this.characters = characters;
-        this.setCharactersAndLabel(characters);
-        this.arrowType = arrowType; // By default, edge is not curved
+        this.arrowType = arrowType;
+        this.setCharactersAndLabel(characters); // Handles defensive copy and label setup
     }
 
     public String getLabel() {
@@ -20,8 +20,11 @@ class Edge {
     }
 
     public void setCharactersAndLabel(Set<Character> characters) {
-        this.characters = characters;
-        this.label = characters.stream().map(String::valueOf).reduce((a, b) -> a + "," + b).orElse("");
+        // Create a mutable copy to avoid issues with immutable input sets
+        this.characters = new HashSet<>(characters);
+        this.label = this.characters.stream()
+                .map(String::valueOf)
+                .reduce((a, b) -> a + "," + b)
+                .orElse("");
     }
-    
 }

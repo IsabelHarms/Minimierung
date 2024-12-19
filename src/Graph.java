@@ -54,6 +54,9 @@ class Graph {
             if (!node.hasPredecessor() && !node.hasSuccessor()) {
                 return "node " + node.getLabel() + " is not connected "; //not connected
             }
+            if (node.outgoingEdges.size()==0 && !node.isEnd) {
+                return "node " + node.getLabel() + " is a dead end "; //dead end
+            }
             if (!node.hasPredecessor() && !node.isStart) {
                 return "node " + node.getLabel() + " is not reachable "; //not reachable
             }
