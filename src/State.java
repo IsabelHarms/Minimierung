@@ -2,7 +2,7 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-class Node {
+class State {
     int x, y;
 
     int radius;
@@ -14,13 +14,13 @@ class Node {
 
     boolean isEnd;
 
-    List<Node> predecessors;
-    List<Node> successors;
+    List<State> predecessors;
+    List<State> successors;
 
     List<Edge> incomingEdges;
     List<Edge> outgoingEdges;
 
-    public Node(int x, int y, int number, int radius) {
+    public State(int x, int y, int number, int radius) {
         this.x = x;
         this.y = y;
         this.radius = radius;
@@ -29,8 +29,8 @@ class Node {
         Edge epsilonEdge = new Edge(this, this, Collections.singleton('ε'), ArrowType.SELF);
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
-        incomingEdges.add(epsilonEdge);
-        outgoingEdges.add(epsilonEdge);
+        //incomingEdges.add(epsilonEdge);
+        //outgoingEdges.add(epsilonEdge);
     }
 
     public String getLabel() {
@@ -41,18 +41,28 @@ class Node {
         this.label = label;
     }
 
-    public Node getNextState(char a) {
+    public State getNextState(char a) {
         for (Edge edge: outgoingEdges) {
             if (edge.characters.contains(a)) {
-                return edge.endNode;
+                return edge.endState;
             }
         }
         return null;
     }
 
+    public Set<State> getPreviousStates(char a) {
+        Set<State> previousStates = new HashSet<>();
+        for (Edge edge: incomingEdges) {
+            if (edge.characters.contains(a)) {
+                previousStates.add(edge.startState);
+            }
+        }
+        return previousStates;
+    }
+
     public boolean hasPredecessor() {
         for(Edge edge: incomingEdges) {
-            if (edge.startNode != this) {
+            if (edge.startState != this) {
                 return true;
             }
         }
@@ -61,25 +71,25 @@ class Node {
 
     public boolean hasSuccessor() {
         for(Edge edge: outgoingEdges) {
-            if (edge.endNode != this) {
+            if (edge.endState != this) {
                 return true;
             }
         }
         return false;
     }
 
-    public Edge connected(Node node) {
+    public Edge connected(State node) {
         for (Edge edge: outgoingEdges) {
-            if (edge.endNode == node) {
+            if (edge.endState == node) {
                 return edge;
             }
         }
         return null;
     }
 
-    public void nextNodesRecursive(Set<Node> reachedNodes) {
+    public void nextNodesRecursive(Set<State> reachedNodes) {
         for (Edge outgoingEdge: outgoingEdges) {
-            Node node = outgoingEdge.endNode;
+            State node = outgoingEdge.endState;
             if (!reachedNodes.contains(node)) {
                 reachedNodes.add(node);
                 node.nextNodesRecursive(reachedNodes);

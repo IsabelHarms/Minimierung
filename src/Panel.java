@@ -1,13 +1,6 @@
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
 import java.awt.geom.QuadCurve2D;
-import java.io.File;
-import java.util.LinkedHashSet;
-import java.util.Objects;
-import java.util.Set;
 
 class Panel extends JPanel{
     static final int NODE_RADIUS = 30;
@@ -31,16 +24,16 @@ class Panel extends JPanel{
         super.paintComponent(g);
         g.setColor(Color.BLACK);
         for (Edge edge : graph.getEdges()) {
-            int startX = edge.startNode.x;
-            int startY = edge.startNode.y;
-            int endX = edge.endNode.x;
-            int endY = edge.endNode.y;
+            int startX = edge.startState.x;
+            int startY = edge.startState.y;
+            int endX = edge.endState.x;
+            int endY = edge.endState.y;
             drawArrowLine(g,startX, startY, endX, endY, edge.arrowType);
             drawArrowHead(g,startX, startY, endX, endY, edge.arrowType);
             drawLabel(g,startX, startY, endX, endY, edge.getLabel(), edge.arrowType);
         }
-        for (Node node : graph.getNodes()) {
-            node.draw(g);
+        for (State state : graph.getStates()) {
+            state.draw(g);
         }
     }
 

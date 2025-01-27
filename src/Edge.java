@@ -2,15 +2,15 @@ import java.util.HashSet;
 import java.util.Set;
 
 class Edge {
-    Node startNode, endNode;
+    State startState, endState;
     Set<Character> characters;
     String label;
 
     ArrowType arrowType;
 
-    public Edge(Node startNode, Node endNode, Set<Character> characters, ArrowType arrowType) {
-        this.startNode = startNode;
-        this.endNode = endNode;
+    public Edge(State startState, State endState, Set<Character> characters, ArrowType arrowType) {
+        this.startState = startState;
+        this.endState = endState;
         this.arrowType = arrowType;
         this.setCharactersAndLabel(characters); // Handles defensive copy and label setup
     }

@@ -1,16 +1,15 @@
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.QuadCurve2D;
 import java.io.*;
 import java.util.*;
 
 class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
-    private Node selectedNode;
-    private Node draggedNode;
-    private Node startNode;
-    private Node endNode;
-    private Node edgeStartNode = null;
+    private State selectedNode;
+    private State draggedNode;
+    private State startNode;
+    private State endNode;
+    private State edgeStartNode = null;
     private int tempX, tempY;
 
     JButton exportButton = new JButton("Export Graph");
@@ -53,12 +52,12 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public void mouseClicked(MouseEvent e) {
         if (SwingUtilities.isLeftMouseButton(e)) {
     //left mouse clicked = new node
-            graph.getNodes().add(new Node(e.getX(), e.getY(), graph.currentNodeNumber++, 30));
+            graph.getStates().add(new State(e.getX(), e.getY(), graph.currentNodeNumber++, 30));
             repaint();
         } else if (SwingUtilities.isRightMouseButton(e)) {
     //right mouse clicked = edit node
             boolean nodeClicked = false;
-            for (Node node : graph.getNodes()) {
+            for (State node : graph.getStates()) {
                 if (node.contains(e.getX(), e.getY())) {
                     nodeClicked = true;
                     String[] options = {"Toggle Start", "Toggle End", "Delete Node", "Add Edge"};
@@ -70,20 +69,20 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                         case 0:  // Toggle Start Node
                             if (node.isStart) {
                                 node.isStart = false;
-                                graph.startNode = null;
+                                graph.startState = null;
                             } else {
                                 node.isStart = true;
-                                if (graph.startNode != null) graph.startNode.isStart = false;
-                                graph.startNode = node;
+                                if (graph.startState != null) graph.startState.isStart = false;
+                                graph.startState = node;
                             }
                             break;
                         case 1: //Toggle End Node
                             if (node.isEnd) {
                                 node.isEnd = false;
-                                graph.endNodes.remove(node);
+                                graph.endStates.remove(node);
                             } else {
                                 node.isEnd = true;
-                                graph.endNodes.add(node);
+                                graph.endStates.add(node);
                             }
                             break;
                         case 2:     //delete Node
@@ -126,8 +125,8 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
 
                         switch (choice) {
                             case 0: // Delete Edge todo curved edge hitbox
-                                if (edge.endNode.connected(edge.startNode) != null) {
-                                    edge.endNode.connected(edge.startNode).arrowType = ArrowType.STRAIGHT; //not bidirectional anymore
+                                if (edge.endState.connected(edge.startState) != null) {
+                                    edge.endState.connected(edge.startState).arrowType = ArrowType.STRAIGHT; //not bidirectional anymore
                                 }
                                 graph.removeEdge(edge);
                                 repaint();
@@ -159,7 +158,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public void mousePressed(MouseEvent e) {
     //mouse right pressed on node = start edge
         if (SwingUtilities.isRightMouseButton(e)) {
-            for (Node node : graph.getNodes()) {
+            for (State node : graph.getStates()) {
                 if (node.contains(e.getX(), e.getY())) {
                     edgeStartNode = node;
                     tempX = e.getX();
@@ -169,7 +168,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
             }
         } else {
     //mouse left pressed on node = move node
-            for (Node node : graph.getNodes()) {
+            for (State node : graph.getStates()) {
                 if (node.contains(e.getX(), e.getY())) {
                     draggedNode = node;
                     break;
@@ -197,7 +196,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     //mouse release while drawing edge + end on node = finalize edge
         if (SwingUtilities.isRightMouseButton(e)) {
             if (edgeStartNode != null) {
-                for (Node node : graph.getNodes()) {
+                for (State node : graph.getStates()) {
                     if (node.contains(e.getX(), e.getY()) && node != edgeStartNode) {
                         String input = JOptionPane.showInputDialog(this, "Enter label for the edge (single characters only):");
                         if (input != null && !input.isEmpty()) {
@@ -238,10 +237,10 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public void mouseExited(MouseEvent e) {}
 
     private boolean isClickOnEdge(int px, int py, Edge edge) {
-        int x1 = edge.startNode.x;
-        int y1 = edge.startNode.y;
-        int x2 = edge.endNode.x;
-        int y2 = edge.endNode.y;
+        int x1 = edge.startState.x;
+        int y1 = edge.startState.y;
+        int x2 = edge.endState.x;
+        int y2 = edge.endState.y;
 
         switch (edge.arrowType) {
             case STRAIGHT:
