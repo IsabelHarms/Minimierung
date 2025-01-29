@@ -12,12 +12,15 @@ public class GraphConverter {
 
     List<Set<State>> Q;
 
-    Set<FromList<StateList<StateEntry>>> fromSet; //K
-    StateEntry[][] StateEntryArray; //delta
+    Set<ToList<StateList<StateEntry>>> fromSet; //K
+    StateEntry[][] stateEntryArray; //delta
 
     LinkedList<State>[][] predecessorArray; //delta^-1
 
-    StateList<StateEntry>[][] gamma;
+    StateList<StateEntry>[][] gammaStateEntry;
+    StateList<StateEntry>[][] gammaPredecessors;
+
+    private List<Set<State>> D;
 
     public GraphConverter(Graph graph, List<Set<State>> Q) {
         this.deaSize = graph.getStates().size();
@@ -27,31 +30,38 @@ public class GraphConverter {
         this.alphabet = new ArrayList<>(graph.getAlphabet());
         this.Q = Q;
 
-        StateEntryArray = new StateEntry[deaSize][alphabetSize]; //delta
+        this.gammaStateEntry = new StateList[alphabetSize][deaSize];
+        this.gammaPredecessors = new StateList[alphabetSize][deaSize];
+
+        this.stateEntryArray = new StateEntry[deaSize][alphabetSize]; //delta
         fromSet = new HashSet<>(); // K
-        initializeTransitionListAndK(fromSet, StateEntryArray);
+        initializeTransitionListAndK(fromSet, stateEntryArray);
 
         predecessorArray = new LinkedList[alphabetSize][deaSize]; //delta^-1
         fillInvertedDeltaArray();
-
-        this.gamma = new StateList[alphabetSize][deaSize];
+        D = new ArrayList<>(Q);
     }
 
     //initialize
-    private void initializeTransitionListAndK(Set<FromList<StateList<StateEntry>>> fromSet, StateEntry[][] transitionListEntryArray) {
+    private void initializeTransitionListAndK(Set<ToList<StateList<StateEntry>>> fromSet, StateEntry[][] stateEntryArray) {
         for (char a : this.alphabet) {
-            FromList<StateList<StateEntry>> fromList = new FromList<>(fromSet, 1, a); //delta'
-            fromList.add(addTransitionList(1, a, 2, transitionListEntryArray, fromList));
-            fromSet.add(fromList);
-
-            FromList<StateList<StateEntry>> fromList1 = new FromList<>(fromSet, 2, a); //delta'
-            fromList1.add(addTransitionList(2, a, 1, transitionListEntryArray, fromList1));
-            fromSet.add(fromList1);
+            for (int i = 1; i <= 2; i++) {
+                ToList<StateList<StateEntry>> toList = new ToList<>(fromSet, i, a); //delta'
+                for (int j = 1; j <= 2; j++) {
+                    StateList<StateEntry> statelist = addStateList(i, a, j, stateEntryArray, toList);
+                    if (statelist.size() != 0) {
+                        toList.add(statelist);
+                    }
+                }
+                if(toList.size() >= 2) {
+                    fromSet.add(toList);
+                }
+            }
         }
     }
-    private StateList<StateEntry> addTransitionList(int i, char a, int j, StateEntry[][] transitionListEntryArray, FromList<StateList<StateEntry>> head) {
-        StateList<StateEntry> transitionList = new StateList<>(i, j, a, head);
-        gamma[a][j] = transitionList;
+    private StateList<StateEntry> addStateList(int i, char a, int j, StateEntry[][] transitionListEntryArray, ToList<StateList<StateEntry>> head) {
+        StateList<StateEntry> transitionList = new StateList<>(j, head);
+        gammaStateEntry[alphabet.indexOf(a)][j] = transitionList;
         Set<State> Qstart = Q.get(i);
         int charIndex = alphabet.indexOf(a);
         for (State startState : Qstart) {
@@ -75,111 +85,134 @@ public class GraphConverter {
         }
     }
 
-    public void minimize() {
+    public List<Set<State>> minimize() {
         while (!fromSet.isEmpty()) {
-            // Get the next fromList to process
-            FromList<StateList<StateEntry>> fromList = fromSet.iterator().next();
-            fromSet.remove(fromList);  // Remove it from the worklist
+            ToList<StateList<StateEntry>> toList = fromSet.iterator().next();
+            fromSet.remove(toList);
+            if(toList.size() >=2 ) {
+                refinePartition(toList, toList.getI());
+            }
+            else {
+                break; //todo, das sollte eigentlich nicht passieren
+            }
 
-            // Call the i method to refine the partitions
-            refinePartition(fromList, fromList.getI());
         }
+        Set<StateList<StateEntry>> lists = new HashSet<>();
+        for (int i = 0; i < alphabetSize; i++) {
+            for (int j = 0; j < deaSize; j++) {
+                if (this.stateEntryArray[j][i] != null) {
+                    StateEntry stateEntry = this.stateEntryArray[j][i];
+                    StateList<StateEntry> stateList = stateEntry.getHead();
+                    lists.add(stateList);
+                    System.out.println("State:" + stateEntry.state.label + ", List: i: " + stateList.getI() + ", j: " + stateList.getJ() + ", a: " + stateList.getA());
+                }
+            }
+        }
+        return Q;
     }
 
-    private void refinePartition(FromList<StateList<StateEntry>> fromList, int t) {
+    private void refinePartition(ToList<StateList<StateEntry>> fromList, int t) {
         StateList<StateEntry> transitionList1 = fromList.get(0);
         StateList<StateEntry> transitionList2 = fromList.get(1);
         StateList<StateEntry> shorterList = transitionList1.size() <= transitionList2.size() ? transitionList1 : transitionList2;
 
-        createNewFromListAndMoveEntry(fromSet, fromList, t+1,fromList.a, shorterList);
+        createNewToListAndMoveEntry(fromSet, fromList, t + 1, fromList.a, shorterList);
 
-        processStateList(shorterList, t);
+        processStateList(shorterList, t); // (ii)
     }
 
-    private void processStateList(StateList<StateEntry> stateList, int t) {  //stateList i,a,j
+    private void processStateList(StateList<StateEntry> stateList, int t) {
         for (StateEntry stateEntry : stateList) {
             State currentState = stateEntry.state;
-            for (char b : graph.getAlphabet()) { //1
-                if(b != stateList.getA()) {
-                    StateEntry otherStateEntry = StateEntryArray[states.indexOf(currentState)][alphabet.indexOf(b)]; //delta(q,b)
-                    if (otherStateEntry == null) continue;
-                    //other i,b,k
-                    StateList<StateEntry> otherStateList = otherStateEntry.getHead();
+            for (char b : alphabet) {
+                int stateIndex = states.indexOf(currentState);
+                int charIndex = alphabet.indexOf(b);
+                if (stateIndex == -1 || charIndex == -1) continue; //todo this shouldnt happen
 
-                    StateList<StateEntry> lastGeneratedList = gamma[b][otherStateList.getJ()];
-
-                    if (lastGeneratedList == null || lastGeneratedList.getI() != t+1) {
-                        lastGeneratedList = createStateList(t+1,otherStateList.getJ(),b, otherStateList.getHead()); //todo
-                    }
-                    lastGeneratedList.add(otherStateEntry);
-                    otherStateEntry.setHead(lastGeneratedList);
-
-                    otherStateList.remove(otherStateEntry);
-                    deleteIfEmpty(otherStateList);
-
-                    // Update predecessor array
-                    int charIndex = alphabet.indexOf(b);
-                    int targetStateIndex = states.indexOf(otherStateEntry.state);
-                    LinkedList<State> predecessors = predecessorArray[charIndex][targetStateIndex];
-                    if (predecessors == null) {
-                        predecessors = new LinkedList<>();
-                        predecessorArray[charIndex][targetStateIndex] = predecessors;
-                    }
-                    predecessors.add(currentState);
-
-                    // Update transition counts
-                    StateList<StateEntry> oldList = otherStateEntry.getHead();
-                    deleteIfEmpty(oldList);
-
-                    // Update gamma
-                    gamma[b][otherStateList.getJ()] = lastGeneratedList;
-
-                    // Add the entry to the new list
-                    lastGeneratedList.add(otherStateEntry);
+                if (b != stateList.getA()) { //(1)
+                    updateStateEntryArray(charIndex, stateIndex, t, b);
                 }
+                //2
+                updatePredecessorArray(charIndex, stateIndex, t, b);
             }
         }
-
-        // Final cleanup
-        for (int i = 0; i < alphabetSize; i++) {
-            for (int j = 0; j < deaSize; j++) {
-                if (gamma[i][j] != null && gamma[i][j].isEmpty()) {
-                    gamma[i][j] = null;  // Clear the reference
-                }
-            }
-        }
-
-        fromSet.removeIf(fromList -> fromList.isEmpty());
+        fromSet.removeIf(toList -> toList.size() < 2); //todo maybe isEmpty
     }
 
-    private void deleteIfEmpty(StateList<StateEntry> stateList) {
-        if (stateList.size() == 0) {
-            stateList.getHead().remove(stateList);
-            gamma[stateList.getA()][stateList.getJ()] = null;
-        }
-        //todo eventually delete from K?
+    private void updateStateEntryArray(int charIndex, int stateIndex, int t, char b) {
+        StateEntry otherStateEntry = stateEntryArray[stateIndex][charIndex];
+        if (otherStateEntry == null) return;
+
+        //L(i,b,k)
+        StateList<StateEntry> otherStateList = otherStateEntry.getHead();
+
+        StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedList(charIndex, otherStateList.getJ(), t, b);
+
+        lastGeneratedList.moveEntryToList(otherStateEntry);
     }
 
-    private void createNewFromListAndMoveEntry(Set<FromList<StateList<StateEntry>>> fromSet, FromList<StateList<StateEntry>> oldList, int i, char a, StateList<StateEntry> entry) {
+    private StateList<StateEntry> getOrCreateLastGeneratedList(int i, int j, int t, char b) {
+        StateList<StateEntry> lastGeneratedList = gammaStateEntry[i][j];
+
+        if (lastGeneratedList == null || lastGeneratedList.getI() != t + 1) {
+            ToList<StateList<StateEntry>> newToList = new ToList<StateList<StateEntry>>(fromSet,t+1,b);
+            lastGeneratedList = createStateList(j, newToList);
+            //modify gamma
+            gammaStateEntry[i][j] = lastGeneratedList;
+        }
+
+        return lastGeneratedList;
+    }
+
+    private StateList<StateEntry> getOrCreateLastGeneratedList2(int charIndex, int i, int j, int t, char b) {
+        StateList<StateEntry> lastGeneratedList = gammaPredecessors[charIndex][j];
+
+        if (lastGeneratedList == null || lastGeneratedList.getJ() != t + 1) {
+            ToList<StateList<StateEntry>> newToList = new ToList<StateList<StateEntry>>(fromSet,t+1,b);
+            lastGeneratedList = createStateList(t + 1, newToList);
+            //modify gamma
+            gammaPredecessors[charIndex][j] = lastGeneratedList;
+        }
+
+        return lastGeneratedList;
+    }
+
+    private void updatePredecessorArray(int charIndex, int stateIndex, int t, char b) { //(2)
+        for (State p: predecessorArray[charIndex][stateIndex]) {
+            StateEntry otherStateEntry = stateEntryArray[states.indexOf(p)][charIndex];
+            if (otherStateEntry == null) continue;
+
+            //L(k,b,i)
+            StateList<StateEntry> otherStateList = otherStateEntry.getHead();
+            StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedList2(charIndex, otherStateList.getI(), otherStateList.getJ(), t, b);
+
+            lastGeneratedList.moveEntryToList(otherStateEntry);
+        }
+    }
+
+    private void createNewToListAndMoveEntry(Set<ToList<StateList<StateEntry>>> fromSet, ToList<StateList<StateEntry>> oldList, int i, char a, StateList<StateEntry> entry) {
         oldList.remove(entry);
-        FromList<StateList<StateEntry>> newList = new FromList<StateList<StateEntry>>(fromSet, i, a);
+        ToList<StateList<StateEntry>> newList = new ToList<StateList<StateEntry>>(fromSet, i, a);
         fromSet.add(newList);
         newList.add(entry);
-        entry.setI(i);
         entry.setHead(newList);
         if(oldList.size() < 2) {
             fromSet.remove(oldList);
         }
     }
 
-    private StateList<StateEntry> createStateList(int i, int j, char a, FromList<StateList<StateEntry>> head) {
-        var stateList =  new StateList<StateEntry>(i,j,a, head);
+    private void moveEntry() {
+
+    }
+
+    private StateList<StateEntry> createStateList(int j, ToList<StateList<StateEntry>> head) {
+        var stateList =  new StateList<StateEntry>(j, head);
         addGamma(stateList);
         head.add(stateList);
         return stateList;
     }
 
     private void addGamma(StateList<StateEntry> stateList) {
-        gamma[stateList.getA()][stateList.getJ()] = stateList;
+        gammaStateEntry[alphabet.indexOf(stateList.getA())][stateList.getJ()] = stateList;
     }
 }

@@ -1,48 +1,69 @@
 import java.util.LinkedList;
 
-public class StateList<StateEntry> extends LinkedList<StateEntry> {
-    private int i;
+public class StateList<T extends StateEntry> extends LinkedList<StateEntry> {
     private int j;
-    private char a;
-
-    private FromList<StateList<StateEntry>> head;
-    public StateList(int i, int j, char a, FromList<StateList<StateEntry>> head) {
-        this.i = i;
+    private ToList<StateList<StateEntry>> head;
+    public StateList(int j, ToList<StateList<StateEntry>> head) {
         this.j = j;
-        this.a = a;
         this.head = head;
     }
 
     public int getI() {
-        return i;
+        return head.getI();
     }
 
     public int getJ() {
         return j;
     }
 
-    public int getA() {
-        return a;
+    public char getA() {
+        return head.a;
     }
 
-    public FromList<StateList<StateEntry>> getHead() {
+    public ToList<StateList<StateEntry>> getHead() {
         return head;
-    }
-
-    public void setI(int i) {
-        this.i = i;
     }
 
     public void setJ(int j) {
         this.j = j;
     }
 
-    public void setA(char a) {
-        this.a = a;
-    }
 
-    public void setHead(FromList<StateList<StateEntry>> head) {
+    public void setHead(ToList<StateList<StateEntry>> head) {
         this.head = head;
     }
+
+    public void moveEntryToList(StateEntry entry) {
+        entry.getHead().removeEntry(entry);
+        this.add(entry);
+        entry.setHead((StateList<StateEntry>) this);
+    }
+
+    public void removeEntry(StateEntry entry) {
+        this.remove(entry);
+        deleteIfEmpty();
+    }
+
+    private void deleteIfEmpty() {
+        if (this.size() == 0) {
+            this.getHead().remove(this);
+            this.getHead().FromSet.remove(this.getHead());
+        }
+    }
 }
-//für ein a übergänge in mindestens zwei andere StateLists
+class StateEntry {
+    State state;
+    StateList<StateEntry> head;
+    public StateEntry(State state, StateList<StateEntry> head) {
+        this.state = state;
+        this.head = head;
+    }
+
+    public void setHead(StateList<StateEntry> head) {
+        this.head = head;
+    }
+
+    public StateList<StateEntry> getHead() {
+        return head;
+    }
+}

@@ -49,8 +49,64 @@ class PanelMinimizing extends Panel {
         Q.add(Q2);
         Set<Character> alphabet = graph.getAlphabet();
         //(2)
-        //GraphConverter graphConverter = new GraphConverter(graph, Q);
-        return getPartitionsLog(t,Q,alphabet);
+        //return getPartitionsHopcroft(Q, alphabet);
+        GraphConverter graphConverter = new GraphConverter(graph, Q);
+        return graphConverter.minimize();
+    }
+    public List<Set<State>> getPartitionsHopcroft(List<Set<State>> Q, Set<Character> alphabet) {
+        // The worklist contains partitions to be split
+        Queue<Set<State>> worklist = new LinkedList<>(Q);
+
+        while (!worklist.isEmpty()) {
+            // Select and remove a partition from the worklist
+            Set<State> A = worklist.poll();
+
+            for (char c : alphabet) {
+                // Precompute states that transition to `A` on `c`
+                Set<State> P = computeTransitionSet(A, c, Q);
+
+                // Split each partition in Q using P
+                Q = splitPartitions(Q, P, worklist);
+            }
+        }
+        return Q;
+    }
+
+    private Set<State> computeTransitionSet(Set<State> A, char c, List<Set<State>> Q) {
+        Set<State> P = new HashSet<>();
+        for (State state : A) {
+            P.addAll(state.getPreviousStates(c));
+        }
+        return P;
+    }
+
+    private List<Set<State>> splitPartitions(List<Set<State>> Q, Set<State> P, Queue<Set<State>> worklist) {
+        List<Set<State>> newPartitions = new ArrayList<>();
+
+        for (Set<State> partition : Q) {
+            Set<State> intersect = new HashSet<>(partition);
+            intersect.retainAll(P);
+
+            Set<State> difference = new HashSet<>(partition);
+            difference.removeAll(P);
+
+            if (!intersect.isEmpty() && !difference.isEmpty()) {
+                newPartitions.add(intersect);
+                newPartitions.add(difference);
+
+                // Add the smaller subset to the worklist
+                if (worklist.contains(partition)) {
+                    worklist.remove(partition);
+                    worklist.add(intersect);
+                    worklist.add(difference);
+                } else {
+                    worklist.add(intersect.size() < difference.size() ? intersect : difference);
+                }
+            } else {
+                newPartitions.add(partition);
+            }
+        }
+        return newPartitions;
     }
 
     private List<Set<State>> getPartitionsLog(int t, List<Set<State>> Q, Set<Character> alphabet) {
@@ -82,6 +138,8 @@ class PanelMinimizing extends Panel {
         }
         return Q;
     }
+
+
     private List<Set<State>> getPartitionsQuadratic(int t, List<Set<State>> Q, Set<Character> alphabet) {
         while (true) {
             boolean changed = false;
@@ -139,7 +197,7 @@ class PanelMinimizing extends Panel {
                 y += node.y;
             //add edge if new, add characters if old
             for (Edge incomingEdge : node.incomingEdges) {
-                if (nodes.contains(incomingEdge.startState)) { //edge within partition todo next
+                if (nodes.contains(incomingEdge.startState)) { //edge within partition
                     Edge selfEdge = newNode.connected(newNode);
                     if (selfEdge == null) {
                         Edge newEdge = new Edge(newNode, newNode, incomingEdge.characters, ArrowType.SELF);
