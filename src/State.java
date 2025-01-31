@@ -14,6 +14,10 @@ class State {
 
     boolean isEnd;
 
+    int algorithmArrayIndex;
+
+    int currentPartitionIndex;
+
     List<State> predecessors;
     List<State> successors;
 
@@ -29,8 +33,6 @@ class State {
         Edge epsilonEdge = new Edge(this, this, Collections.singleton('ε'), ArrowType.SELF);
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
-        //incomingEdges.add(epsilonEdge);
-        //outgoingEdges.add(epsilonEdge);
     }
 
     public String getLabel() {
@@ -39,6 +41,22 @@ class State {
 
     public void setLabel(String label) {
         this.label = label;
+    }
+
+    public int getIndex() {
+        return algorithmArrayIndex;
+    }
+
+    public void setIndex(int algorithmArrayIndex) {
+        this.algorithmArrayIndex = algorithmArrayIndex;
+    }
+
+    public int getPartition() {
+        return currentPartitionIndex;
+    }
+
+    public void setPartition(int currentPartitionIndex) {
+        this.currentPartitionIndex = currentPartitionIndex;
     }
 
     public State getNextState(char a) {

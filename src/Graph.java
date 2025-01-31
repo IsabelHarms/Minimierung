@@ -49,6 +49,14 @@ class Graph {
         return alphabet;
     }
 
+    public void initializeStateIndices() {
+        int i = 0;
+        for (State state : getStates()) {
+            state.setIndex(i);
+            i++;
+        }
+    }
+
     public Set<State> getNextStates(Set<State> nodes, char a) {
         Set<State> nextNodes = new HashSet<>();
         for(State node : nodes) {

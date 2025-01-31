@@ -30,6 +30,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
 
         startMinimizingButton.addActionListener(e -> {
             if(!Objects.equals(graph.validate(), "valid")) {
+                graph.initializeStateIndices();
                 return;
             }
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);

@@ -15,4 +15,7 @@ public class ToList<StateList> extends LinkedList<StateList> {
     public int getI() {
        return i;
     }
+    public char getA() {
+        return a;
+    }
 }
