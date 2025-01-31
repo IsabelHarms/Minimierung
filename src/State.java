@@ -24,13 +24,15 @@ class State {
     List<Edge> incomingEdges;
     List<Edge> outgoingEdges;
 
+    Color color;
+
     public State(int x, int y, int number, int radius) {
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.number = number;
         this.label = "Z" + number;
-        Edge epsilonEdge = new Edge(this, this, Collections.singleton('ε'), ArrowType.SELF);
+        this.color = Color.white;
         incomingEdges = new ArrayList<>();
         outgoingEdges = new ArrayList<>();
     }
@@ -57,6 +59,10 @@ class State {
 
     public void setPartition(int currentPartitionIndex) {
         this.currentPartitionIndex = currentPartitionIndex;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
     }
 
     public State getNextState(char a) {
@@ -115,21 +121,15 @@ class State {
         }
     }
     public void draw(Graphics g) {
-        if (isStart && isEnd) {
-            g.setColor(Color.BLUE);
-            g.fillOval(x - radius, y - radius, radius*2, radius*2);
-        } else if (isStart) {
-            g.setColor(Color.GREEN);
-            g.fillOval(x - radius, y - radius, radius*2, radius*2);
-        } else if (isEnd) {
-            g.setColor(Color.RED);
-            g.fillOval(x - radius, y - radius, radius*2, radius*2);
-        } else {
-            g.setColor(Color.WHITE);
-            g.fillOval(x - radius, y - radius, radius*2, radius*2);
-        }
-
+        g.setColor(this.color);
+        g.fillOval(x - radius, y - radius, radius*2, radius*2);
         g.setColor(Color.BLACK);
+        if (isStart) {
+            drawStartArrow(g, x - radius - 15, y, x - radius, y);
+        }
+        if (isEnd) {
+            g.drawOval(x - radius + 4, y - radius + 4, (radius * 2) - 8, (radius * 2) - 8);
+        }
         g.drawOval(x - radius, y - radius, radius*2, radius*2);
 
         FontMetrics fm = g.getFontMetrics();
@@ -138,8 +138,21 @@ class State {
         g.drawString(this.getLabel(), x - labelWidth / 2, y + labelHeight / 4);
     }
 
-
     public boolean contains(int px, int py) {
         return Math.abs(x - px) <= radius && Math.abs(y - py) <= radius;
+    }
+
+    private void drawStartArrow(Graphics g, int x1, int y1, int x2, int y2) {
+        int arrowSize = 8;
+        double angle = Math.atan2(y2 - y1, x2 - x1);
+
+        int x3 = (int) (x2 - arrowSize * Math.cos(angle - Math.PI / 6));
+        int y3 = (int) (y2 - arrowSize * Math.sin(angle - Math.PI / 6));
+        int x4 = (int) (x2 - arrowSize * Math.cos(angle + Math.PI / 6));
+        int y4 = (int) (y2 - arrowSize * Math.sin(angle + Math.PI / 6));
+
+        g.drawLine(x1, y1, x2, y2);
+        g.drawLine(x2, y2, x3, y3);
+        g.drawLine(x2, y2, x4, y4);
     }
 }
