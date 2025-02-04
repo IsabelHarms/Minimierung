@@ -6,6 +6,8 @@ import java.util.*;
 import java.util.List;
 
 class PanelMinimizing extends Panel {
+
+    static Color[] partitionColors = {Color.YELLOW, Color.CYAN, Color.PINK, Color.GREEN, Color.LIGHT_GRAY, Color.getColor("#fff8dc")};
     public PanelMinimizing(Graph graph) {
         super(graph);
         JButton backButton = new JButton("← Back");
@@ -30,7 +32,8 @@ class PanelMinimizing extends Panel {
         nextButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                minimizeStepByStep(getPartitions()); //todo only one partition at a time, then repaint
+                getPartitions(); //todo only one partition at a time, then repaint
+                //minimizeStepByStep()
                 repaint();;
             }
         });
@@ -49,9 +52,31 @@ class PanelMinimizing extends Panel {
         Q.add(Q2);
         Set<Character> alphabet = graph.getAlphabet();
         //(2)
-        //return getPartitionsHopcroft(Q, alphabet);
+        return getPartitionsStepByStep(Q);
+
+    }
+
+    private List<Set<State>> getPartitionsStepByStep(List<Set<State>> Q) {
         GraphConverter graphConverter = new GraphConverter(graph, Q);
-        return graphConverter.minimize();
+        while (!graphConverter.toSet.isEmpty()) {
+            List<Set<State>> partitions = graphConverter.minimizeStep();
+            visualizePartitions(partitions);
+        }
+        return Q;
+    }
+
+    private void visualizePartitions(List<Set<State>> Q) {
+        for (int i = 0; i < Q.size(); i++) {
+            Color color = Color.WHITE;
+            if (i < partitionColors.length) {
+                color = partitionColors[i];
+            }
+            for (State state : Q.get(i)) {
+                state.setPartition(i);
+                state.setColor(color);
+            }
+        }
+        repaint();
     }
     public List<Set<State>> getPartitionsHopcroft(List<Set<State>> Q, Set<Character> alphabet) {
         // The worklist contains partitions to be split
