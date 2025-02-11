@@ -20,7 +20,7 @@ public class GraphConverter {
     StateList<StateEntry>[][] gammaStateEntry;
     StateList<StateEntry>[][] gammaPredecessors;
 
-    private List<Set<State>> D;
+    private List<Set<StateList<StateEntry>>> D;
 
     //todo index state attribute, charIndex
 
@@ -34,7 +34,7 @@ public class GraphConverter {
         this.Q = Q;
 
         this.gammaStateEntry = new StateList[alphabetSize][deaSize];
-        this.gammaPredecessors = new StateList[alphabetSize][deaSize];
+        this.gammaPredecessors = new StateList[deaSize][alphabetSize];
 
         this.stateEntryArray = new StateEntry[deaSize][alphabetSize]; //delta
         toSet = new HashSet<>(); // K
@@ -42,7 +42,8 @@ public class GraphConverter {
 
         predecessorArray = new LinkedList[alphabetSize][deaSize]; //delta^-1
         fillInvertedDeltaArray();
-        D = new ArrayList<>(Q);
+        D = new ArrayList<>();
+        D.add(getDT());
         printLists();
         printK();
         System.out.println("initialisation finished \n");
@@ -50,6 +51,7 @@ public class GraphConverter {
 
     private void printK() {
         for (ToList<StateList<StateEntry>> toList: toSet) {
+            System.out.println("toList:" + toList.getI() + ", "  + toList.getA());
             for (StateList<StateEntry> stateList: toList) {
                 System.out.println(stateList.getI() + " " + stateList.getJ() + " " + stateList.getA());
                 for (StateEntry stateEntry : stateList) {
@@ -79,6 +81,7 @@ public class GraphConverter {
     private StateList<StateEntry> addStateList(int i, char a, int j, StateEntry[][] transitionListEntryArray, ToList<StateList<StateEntry>> head) {
         StateList<StateEntry> transitionList = new StateList<>(j, head);
         gammaStateEntry[alphabet.indexOf(a)][j] = transitionList;
+        gammaPredecessors[i][alphabet.indexOf(a)] = transitionList;
         Set<State> Qstart = Q.get(i);
         int charIndex = alphabet.indexOf(a);
         for (State startState : Qstart) {
@@ -101,16 +104,22 @@ public class GraphConverter {
         }
     }
 
-    public List<Set<State>> minimizeStep() {
+    public List<Set<StateList<StateEntry>>> minimize() {
+        int t = 2;
+        while (!toSet.isEmpty()) {
             ToList<StateList<StateEntry>> toList = toSet.iterator().next();
             toSet.remove(toList);
             if(toList.size() >=2 ) {
-                refinePartition(toList, toList.getI());
+                refinePartition(toList, t);
+                System.out.println("t: " + toList.getI()); //todo???
                 printLists();
                 printK();
                 System.out.println("\n");
             }
-            return Q;
+            D.add(getDT());
+            t++;
+        }
+        return D;
     }
 
     private void printLists() {
@@ -121,7 +130,41 @@ public class GraphConverter {
                     StateEntry stateEntry = this.stateEntryArray[j][i];
                     StateList<StateEntry> stateList = stateEntry.getHead();
                     lists.add(stateList);
-                    System.out.println("State:" + stateEntry.state.label + ", List: i: " + stateList.getI() + ", j: " + stateList.getJ() + ", a: " + stateList.getA() + " head: " + stateList.getHead().getI() + stateList.getHead().getA());
+                    System.out.println("State:" + stateEntry.state.label + ", List: i: " + stateList.getI() + ", j: " + stateList.getJ() + ", a: " + stateList.getA() + " head: " + stateList.getHead().getI() + stateList.getHead().getA() + stateList.getHead());
+                }
+            }
+        }
+    }
+
+    private Set<StateList<StateEntry>> getDT() {
+        Set<StateList<StateEntry>> lists = new HashSet<>();
+        for (int i = 0; i < alphabetSize; i++) {
+            for (int j = 0; j < deaSize; j++) {
+                if (this.stateEntryArray[j][i] != null) {
+                    StateEntry stateEntry = this.stateEntryArray[j][i];
+                    StateList<StateEntry> stateList = stateEntry.getHead();
+                    lists.add((StateList<StateEntry>) stateList.clone()); //todo objekt wird noch verändert.
+                }
+            }
+        }
+        return lists;
+    }
+
+    private void printGammaPredecessor() {
+        for (int i = 0; i < alphabetSize; i++) {
+            for (int j = 0; j < deaSize; j++) {
+                if (gammaPredecessors[j][i] != null) {
+                    System.out.println("[" + j + i + "]: " + gammaPredecessors[j][i].getI() + gammaPredecessors[j][i].getJ() + gammaPredecessors[j][i].getA());
+                }
+            }
+        }
+    }
+
+    private void printGammaStateEntry() {
+        for (int i = 0; i < alphabetSize; i++) {
+            for (int j = 0; j < deaSize; j++) {
+                if (gammaStateEntry[i][j] != null) {
+                    System.out.println("[" + i + j + "]: " + gammaStateEntry[i][j].getI() + gammaStateEntry[i][j].getJ() + gammaStateEntry[i][j].getA());
                 }
             }
         }
@@ -144,7 +187,7 @@ public class GraphConverter {
                 //int i = b-'a';
                 int stateIndex = currentState.getIndex();
                 int charIndex = alphabet.indexOf(b);
-                if (stateIndex == -1 || charIndex == -1) continue; //todo this shouldnt happen
+                if (stateIndex >= deaSize || charIndex >= alphabetSize) return; //todo this shouldnt happen
 
                 if (b != stateList.getA()) { //(1)
                     updateStateEntryArray(charIndex, stateIndex, t, b);
@@ -162,8 +205,7 @@ public class GraphConverter {
 
         //L(i,b,k)
         StateList<StateEntry> otherStateList = otherStateEntry.getHead();
-
-        StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedStateList(charIndex, otherStateList.getJ(), t, b);
+        StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedStateList(t, charIndex, otherStateList.getJ(), b);
 
         lastGeneratedList.moveEntryToList(otherStateEntry);
     }
@@ -182,13 +224,16 @@ public class GraphConverter {
     }
 
     private StateList<StateEntry> getOrCreateLastGeneratedStateList(int t, int charIndex, int k, char b) {
+        //L(t+1,b,k)?
         StateList<StateEntry> lastGeneratedList = gammaStateEntry[charIndex][k];
 
+        printGammaStateEntry();
+        System.out.println("charIndex: " + charIndex + ", k: " + k);
         if (lastGeneratedList == null || lastGeneratedList.getI() != t + 1) {
+            System.out.println("decided against last generated statelist");
             ToList<StateList<StateEntry>> newToList = new ToList<StateList<StateEntry>>(toSet,t+1,b);
             toSet.add(newToList);
-            System.out.println("here1");
-            lastGeneratedList = createStateList(k, newToList, charIndex);
+            lastGeneratedList = createStateList(k, newToList);
             //modify gamma
             gammaStateEntry[charIndex][k] = lastGeneratedList;
         }
@@ -197,21 +242,30 @@ public class GraphConverter {
 
 
     private StateList<StateEntry> getOrCreateLastGeneratedPredecessorList(int charIndex, int k, int t, char b) {
-        StateList<StateEntry> lastGeneratedList = gammaPredecessors[charIndex][k];
-
+        StateList<StateEntry> lastGeneratedList = gammaPredecessors[k][charIndex];
+//L(k,b,t+1)
+        printGammaPredecessor();
+        System.out.println("k: " + k + ", charIndex: " + charIndex);
         if (lastGeneratedList == null || lastGeneratedList.getJ() != t + 1) {
-            ToList<StateList<StateEntry>> newToList = new ToList<StateList<StateEntry>>(toSet,k,b);
+            ToList<StateList<StateEntry>> newToList;
+            if (lastGeneratedList != null) {
+                newToList = lastGeneratedList.getHead();
+            }
+            else {
+                System.out.println("decided against last generated predecessor list"); //todo doesnt work for 4,0
+                newToList = new ToList<StateList<StateEntry>>(toSet,k,b);
+            }
             toSet.add(newToList);
-            System.out.println("here2");
-            lastGeneratedList = createStateList(t + 1, newToList, charIndex);
+            lastGeneratedList = createStateList(t + 1, newToList);
             //modify gamma
-            gammaPredecessors[charIndex][k] = lastGeneratedList;
+            gammaPredecessors[k][charIndex] = lastGeneratedList;
         }
         return lastGeneratedList;
     }
 
     private void createNewToListAndMoveEntry(Set<ToList<StateList<StateEntry>>> fromSet, ToList<StateList<StateEntry>> oldList, int i, char a, StateList<StateEntry> entry) {
         oldList.remove(entry);
+        System.out.println("here1");
         ToList<StateList<StateEntry>> newList = new ToList<StateList<StateEntry>>(fromSet, i, a);
         fromSet.add(newList);
         newList.add(entry);
@@ -221,10 +275,19 @@ public class GraphConverter {
         }
     }
 
-    private StateList<StateEntry> createStateList(int j, ToList<StateList<StateEntry>> head, int charIndex) {
+    private StateList<StateEntry> createStateList(int j, ToList<StateList<StateEntry>> head) {
         System.out.println("StateListCreated:" + j);
         var stateList =  new StateList<StateEntry>(j, head);
         head.add(stateList);
         return stateList;
+    }
+
+    private ToList<StateList<StateEntry>> tempGetToList(int i, char a) {
+        for ( ToList<StateList<StateEntry>> toList: toSet) {
+            if (toList.getI() == i && toList.getA() == a) {
+                return toList;
+            }
+        }
+        return null;
     }
 }

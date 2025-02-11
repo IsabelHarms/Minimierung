@@ -13,10 +13,10 @@ class Panel extends JPanel{
         this.graph = graph;
         graphStateTextArea = new JTextArea(20, 20);
         graphStateTextArea.setEditable(false);
+
         graphStateTextArea.setText(graph.getGraphState());  // Initialize with current state
         scrollPane = new JScrollPane(graphStateTextArea);
         add(scrollPane, BorderLayout.EAST);  // Add to the right side of the panel
-
     }
 
     @Override
