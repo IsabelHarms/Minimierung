@@ -58,7 +58,11 @@ class PanelMinimizing extends Panel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (graphConverter != null) {
-                    //todo jetzt
+                    for (Set<State> partition : transformSetOfListsToPartitions(D.get(t))) {
+                        if (partition.size() != 0) {
+                            mergeNodes(partition);
+                        }
+                    }
                 }
                 repaint();
             }
@@ -86,22 +90,35 @@ class PanelMinimizing extends Panel {
     }
 
     private void visualizeStep() {
-        transformSetOfListsToPartitions(D.get(t));
+        List<Set<State>> partitions = transformSetOfListsToPartitions(D.get(t));
+        printPartitions(partitions);
+        visualizePartitions(partitions);
         graphStateTextArea.setText("t = " + t  + ": \n" + getListsText(D.get(t)));
     }
-    private void transformSetOfListsToPartitions(Set<StateList<StateEntry>> DT) {
-        List<Set<State>> partitions;
+    private List<Set<State>> transformSetOfListsToPartitions(Set<StateList<StateEntry>> DT) {
+        List<Set<State>> partitions = new ArrayList<>();
+        Set<State> partition0 = new HashSet<>();
+        partitions.add(partition0);
         for (StateList<StateEntry> list : DT) {
             for (StateEntry stateEntry : list) {
-                stateEntry.state.setPartition(list.getI());
-                Color color = Color.WHITE;
-                if (list.getI() < partitionColors.length) {
-                    color = partitionColors[list.getI()];
+                System.out.print(stateEntry.state.getLabel());
+                if (partitions.size() >= list.getI()+1) { //Qi exists
+                    System.out.println("1");
+                    Set<State> partition = partitions.get(list.getI());
+                    partition.add(stateEntry.state);
+                } else { //No Qi yet
+                    System.out.println("2");
+                    Set<State> partition = new HashSet<>();
+                    partition.add(stateEntry.state);
+                    while (partitions.size() <= list.getI()) {
+                        partitions.add(new HashSet<>());
+                    }
+                    partitions.add(list.getI(), partition);
                 }
-                stateEntry.state.setColor(color);
+                stateEntry.state.setPartition(list.getI());
             }
         }
-
+        return partitions;
     }
 
     private String getListsText(Set<StateList<StateEntry>> DT) {
@@ -128,6 +145,16 @@ class PanelMinimizing extends Panel {
             }
         }
         repaint();
+    }
+
+    private void printPartitions(List<Set<State>> Q) {
+        for (int i = 0; i < Q.size(); i++) {
+            System.out.print(i + ": ");
+            for (State state : Q.get(i)) {
+                System.out.print(state.getLabel());
+            }
+            System.out.print("\n");
+        }
     }
     public List<Set<State>> getPartitionsHopcroft(List<Set<State>> Q, Set<Character> alphabet) {
         // The worklist contains partitions to be split
