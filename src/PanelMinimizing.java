@@ -64,8 +64,14 @@ class PanelMinimizing extends Panel {
                         }
                     }
                 }
-                repaint();
+                JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(finalizeButton);
+                if (frame != null) {
+                    frame.setContentPane(new PanelGraph(graph));
+                    frame.revalidate();
+                    frame.repaint();
+                }
             }
+
         });
     }
 
@@ -101,13 +107,10 @@ class PanelMinimizing extends Panel {
         partitions.add(partition0);
         for (StateList<StateEntry> list : DT) {
             for (StateEntry stateEntry : list) {
-                System.out.print(stateEntry.state.getLabel());
                 if (partitions.size() >= list.getI()+1) { //Qi exists
-                    System.out.println("1");
                     Set<State> partition = partitions.get(list.getI());
                     partition.add(stateEntry.state);
                 } else { //No Qi yet
-                    System.out.println("2");
                     Set<State> partition = new HashSet<>();
                     partition.add(stateEntry.state);
                     while (partitions.size() <= list.getI()) {
@@ -116,6 +119,11 @@ class PanelMinimizing extends Panel {
                     partitions.add(list.getI(), partition);
                 }
                 stateEntry.state.setPartition(list.getI());
+            }
+        }
+        for (State state : graph.getStates()) { //collect states that do not appear in an L-list. non end states have been cleared previously
+            if (state.isEnd && state.outgoingEdges.size() == 0) {
+                partitions.get(1).add(state);
             }
         }
         return partitions;

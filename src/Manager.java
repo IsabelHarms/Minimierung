@@ -14,7 +14,3 @@ public class Manager {
         frame.setVisible(true);
     }
 }
-
-//todo fix self edges
-//todo make states movable even after minimizing?
-// todo test more complex examples

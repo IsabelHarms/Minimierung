@@ -22,8 +22,6 @@ public class GraphConverter {
 
     private List<Set<StateList<StateEntry>>> D;
 
-    //todo index state attribute, charIndex
-
     public GraphConverter(Graph graph, List<Set<State>> Q) {
         this.deaSize = graph.getStates().size();
         this.alphabetSize = graph.getAlphabet().size();
@@ -109,7 +107,6 @@ public class GraphConverter {
             toSet.remove(toList);
             if(toList.size() >=2 ) {
                 refinePartition(toList, t);
-                System.out.println("t: " + toList.getI()); //todo???
                 printLists();
                 printK();
                 System.out.println("\n");
@@ -141,7 +138,7 @@ public class GraphConverter {
                 if (this.stateEntryArray[j][i] != null) {
                     StateEntry stateEntry = this.stateEntryArray[j][i];
                     StateList<StateEntry> stateList = stateEntry.getHead();
-                    lists.add((StateList<StateEntry>) stateList.clone()); //todo objekt wird noch verändert.
+                    lists.add((StateList<StateEntry>) stateList.clone());
                 }
             }
         }
@@ -184,7 +181,7 @@ public class GraphConverter {
             for (int b = 0; b < alphabetSize; b++) {
                 //int i = b-'a';
                 int stateIndex = currentState.getIndex();
-                if (stateIndex >= deaSize || b >= alphabetSize) return; //todo this shouldnt happen
+                if (stateIndex >= deaSize || b >= alphabetSize) return;
 
                 if (b != stateList.getA()) { //(1)
                     updateStateEntryArray(b, stateIndex, t);
@@ -214,7 +211,7 @@ public class GraphConverter {
 
             //L(k,b,i)
             StateList<StateEntry> otherStateList = otherStateEntry.getHead();
-            StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedPredecessorList(charIndex, otherStateList.getI(), t); //todo getJ?
+            StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedPredecessorList(charIndex, otherStateList.getI(), t);
 
             lastGeneratedList.moveEntryToList(otherStateEntry);
         }
