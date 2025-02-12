@@ -3,10 +3,10 @@ import java.util.Set;
 
 public class ToList<StateList> extends LinkedList<StateList> {
     int i;
-    char a;
+    int a;
     //Verweis auf K Eintrag
    Set<ToList<StateList>> FromSet;
-    public ToList(Set<ToList<StateList>> FromSet, int i, char a) {
+    public ToList(Set<ToList<StateList>> FromSet, int i, int a) {
         System.out.println("toList generated: " + i + ", " + a);
         this.FromSet = FromSet;
         this.i = i;
@@ -16,7 +16,7 @@ public class ToList<StateList> extends LinkedList<StateList> {
     public int getI() {
        return i;
     }
-    public char getA() {
+    public int getA() {
         return a;
     }
 }

@@ -16,7 +16,7 @@ public class StateList<T extends StateEntry> extends LinkedList<StateEntry> {
         return j;
     }
 
-    public char getA() {
+    public int getA() {
         return head.a;
     }
 
