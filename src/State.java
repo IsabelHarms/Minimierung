@@ -120,6 +120,16 @@ class State {
             }
         }
     }
+
+    public void previousNodesRecursive(Set<State> reachedNodes) {
+        for (Edge incomingEdge: incomingEdges) {
+            State node = incomingEdge.startState;
+            if (!reachedNodes.contains(node)) {
+                reachedNodes.add(node);
+                node.previousNodesRecursive(reachedNodes);
+            }
+        }
+    }
     public void draw(Graphics g) {
         g.setColor(this.color);
         g.fillOval(x - radius, y - radius, radius*2, radius*2);

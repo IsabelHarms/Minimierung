@@ -30,9 +30,10 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
 
         startMinimizingButton.addActionListener(e -> {
             if(!Objects.equals(graph.validate(), "valid")) {
-                graph.initializeStateIndices();
                 return;
             }
+            graph.removeUnnecessaryStates(); //todo edges reappear
+            graph.initializeStateIndices();
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
             frame.setContentPane(new PanelMinimizing(graph));
             frame.revalidate();

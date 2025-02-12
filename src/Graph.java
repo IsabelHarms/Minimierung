@@ -65,25 +65,40 @@ class Graph {
         return nextNodes;
     }
 
+    public void removeUnnecessaryStates() {
+        Set<State> reachableFromStart = reachableFromStart();
+        Set<State> canReachEnd = canReachEnd();
+        Set<State> toBeRemoved = new HashSet<>();
+        Set<Edge> toBeRemovedEdges = new HashSet<>();
+        for (State state : states) {
+            if (!reachableFromStart.contains(state) || !canReachEnd.contains(state)) {
+                toBeRemovedEdges.addAll(state.incomingEdges);
+                toBeRemovedEdges.addAll(state.outgoingEdges);
+                toBeRemoved.add(state);
+            }
+        }
+        states.removeAll(toBeRemoved);
+        edges.removeAll(toBeRemovedEdges);
+    }
+
     public String validate() {
+        Set<State> reachableFromStart = reachableFromStart();
+        Set<State> canReachEnd = canReachEnd();
         if (states.size()==0) {
             return "start building or import your graph.";
         }
         if (states.size()==1) {
             State singleNode = states.iterator().next();
-            if (singleNode.isStart && singleNode.isEnd && getAlphabet().size() > 0) return "valid";
+            if (singleNode.isStart && getAlphabet().size() > 0) return "valid";
         }
 
         for (State state: states) {
             if (!state.hasPredecessor() && !state.hasSuccessor()) {
                 return "state " + state.getLabel() + " is not connected "; //not connected
             }
-            if (state.outgoingEdges.size()==0 && !state.isEnd) {
-                return "state " + state.getLabel() + " is a dead end "; //dead end
-            }
-            if (!state.hasPredecessor() && !state.isStart) {
+            /*if (!state.hasPredecessor() && !state.isStart) {
                 return "state " + state.getLabel() + " is not reachable "; //not reachable
-            }
+            }*/
             Set<Character> seenCharacters = new HashSet<>();
             for (Edge outgoingEdge: state.outgoingEdges) {
                 for (char c : outgoingEdge.characters) {
@@ -92,16 +107,32 @@ class Graph {
                     }
                 }
             }
-            if (!isConnected()) return "graph is not connected";
+            if (!reachableFromStart.contains(state) && !canReachEnd.contains(state)) {
+                return state.getLabel() + " is not connected";
+            }
+
+            if (reachableFromStart.size() != states.size() || canReachEnd.size() != states.size()) {
+                return "valid"; //todo maybe warning
+            }
         }
         return "valid";
     }
 
-    private boolean isConnected() {
+    private Set<State> reachableFromStart() {
         Set<State> reachableNodes = new HashSet<>();
+        if (startState == null) return reachableNodes;
         reachableNodes.add(startState);
         startState.nextNodesRecursive(reachableNodes);
-        return reachableNodes.size() == states.size();
+        return reachableNodes;
+    }
+
+    private Set<State> canReachEnd() {
+        Set<State> reachingNodes = new HashSet<>(endStates);
+        if (endStates.size() == 0) return reachingNodes;
+        for (State endState: endStates) {
+            endState.previousNodesRecursive(reachingNodes);
+        }
+        return reachingNodes;
     }
 
 

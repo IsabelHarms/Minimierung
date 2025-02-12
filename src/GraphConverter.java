@@ -25,7 +25,6 @@ public class GraphConverter {
     //todo index state attribute, charIndex
 
     public GraphConverter(Graph graph, List<Set<State>> Q) {
-        graph.initializeStateIndices();
         this.deaSize = graph.getStates().size();
         this.alphabetSize = graph.getAlphabet().size();
         this.graph = graph;
@@ -252,7 +251,7 @@ public class GraphConverter {
                 newToList = lastGeneratedList.getHead();
             }
             else {
-                System.out.println("decided against last generated predecessor list"); //todo doesnt work for 4,0
+                System.out.println("decided against last generated predecessor list"); //todo doesnt work for 4,0 bc gamma was updated for stateentry not predecessor
                 newToList = new ToList<StateList<StateEntry>>(toSet,k,b);
             }
             toSet.add(newToList);
