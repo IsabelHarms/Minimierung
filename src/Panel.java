@@ -13,6 +13,7 @@ class Panel extends JPanel{
         this.graph = graph;
         graphStateTextArea = new JTextArea(20, 20);
         graphStateTextArea.setEditable(false);
+        graphStateTextArea.setFont(new Font("Arial", Font.PLAIN, 25));
 
         graphStateTextArea.setText(graph.getGraphState());  // Initialize with current state
         scrollPane = new JScrollPane(graphStateTextArea);
@@ -69,6 +70,8 @@ class Panel extends JPanel{
             default:
                 throw new IllegalStateException("Unbekannter ArrowType: " + arrowType);
         }
+        Font font = new Font("Arial", Font.BOLD, 16); // Arial, Fett, Größe 16
+        g.setFont(font);
         g.drawString(label, labelX, labelY);
     }
     protected void drawArrowLine(Graphics g, int startX, int startY, int endX, int endY, ArrowType arrowType) {

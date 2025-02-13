@@ -7,7 +7,19 @@ import java.util.List;
 
 class PanelMinimizing extends Panel {
 
-    static Color[] partitionColors = {Color.YELLOW, Color.CYAN, Color.PINK, Color.GREEN, Color.LIGHT_GRAY, Color.getColor("#fff8dc")};
+    static Color[] partitionColors = {
+            Color.WHITE,
+            Color.YELLOW,
+            Color.CYAN,
+            Color.PINK,
+            Color.GREEN,
+            Color.LIGHT_GRAY,
+            new Color(255, 165, 0),  // Orange
+            new Color(173, 216, 230), // Hellblau
+            new Color(144, 238, 144), // Hellgrün
+            new Color(255, 182, 193), // Hellrosa
+            new Color(240, 230, 140)  // Khaki
+    };
 
     GraphConverter graphConverter;
     List<Set<StateList<StateEntry>>> D;
@@ -18,8 +30,13 @@ class PanelMinimizing extends Panel {
         t = 0;
         JButton backButton = new JButton("← Back");
         JButton nextButton = new JButton("Next →");
-
         JButton finalizeButton = new JButton("Merge Nodes");
+        backButton.setFont(new Font("Arial", Font.BOLD, 20)); // Größere Schrift
+        backButton.setPreferredSize(new Dimension(150, 50)); // Größerer Button
+        nextButton.setFont(new Font("Arial", Font.BOLD, 20)); // Größere Schrift
+        nextButton.setPreferredSize(new Dimension(150, 50)); // Größerer Button
+        finalizeButton.setFont(new Font("Arial", Font.BOLD, 20)); // Größere Schrift
+        finalizeButton.setPreferredSize(new Dimension(200, 50)); // Größerer Button
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(backButton);
@@ -73,6 +90,25 @@ class PanelMinimizing extends Panel {
             }
 
         });
+        addDefaultState();
+        graph.initializeStateIndices();
+        repaint();
+    }
+
+    public void addDefaultState() {
+        State defaultState = new State(20,20, graph.currentNodeNumber++, 30);
+        graph.addNode(defaultState);
+        graph.addEdge(new Edge(defaultState, defaultState, graph.getAlphabet(), ArrowType.SELF));
+        for (State state: graph.getStates()) {
+            //collect characters
+            Set<Character> unusedCharacters = new HashSet<>(graph.getAlphabet());
+            for (Edge edge : state.outgoingEdges) {
+                unusedCharacters.removeAll(edge.characters);
+            }
+            if (unusedCharacters.size() != 0) { //state needs defaultEdge
+                graph.addEdge(new Edge(state, defaultState, unusedCharacters, ArrowType.STRAIGHT));
+            }
+        }
     }
 
     private void getPartitions() {
@@ -99,7 +135,7 @@ class PanelMinimizing extends Panel {
         List<Set<State>> partitions = transformSetOfListsToPartitions(D.get(t));
         printPartitions(partitions);
         visualizePartitions(partitions);
-        graphStateTextArea.setText("t = " + t  + ": \n" + getListsText(D.get(t)));
+        graphStateTextArea.setText("t = " + (t+2)  + ": \n" + getListsText(D.get(t)));
     }
     private List<Set<State>> transformSetOfListsToPartitions(Set<StateList<StateEntry>> DT) {
         List<Set<State>> partitions = new ArrayList<>();
@@ -132,7 +168,7 @@ class PanelMinimizing extends Panel {
     private String getListsText(Set<StateList<StateEntry>> DT) {
         StringBuilder listsText = new StringBuilder();
         for (StateList<StateEntry> stateList : DT) {
-            listsText.append("List: i: ").append(stateList.getI()).append(", a: ").append(stateList.getA()).append(", j: ").append(stateList.getJ()).append("\n");
+            listsText.append("List: i: ").append(stateList.getI()).append(", a: ").append(graphConverter.alphabet.get(stateList.getA())).append(", j: ").append(stateList.getJ()).append("\n");
             for (StateEntry stateEntry: stateList) {
                 listsText.append(stateEntry.state.getLabel()).append(" ");
             }

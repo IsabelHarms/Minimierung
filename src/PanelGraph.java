@@ -5,10 +5,7 @@ import java.io.*;
 import java.util.*;
 
 class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
-    private State selectedNode;
     private State draggedNode;
-    private State startNode;
-    private State endNode;
     private State edgeStartNode = null;
     private int tempX, tempY;
 
@@ -18,22 +15,29 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     public PanelGraph(Graph graph) {
         super(graph);
         JPanel topButtonPanel = new JPanel();
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        exportButton.setFont(new Font("Arial", Font.BOLD, 20)); // Größere Schrift
+        exportButton.setPreferredSize(new Dimension(200, 50)); // Größerer Button
+        importButton.setFont(new Font("Arial", Font.BOLD, 20)); // Größere Schrift
+        importButton.setPreferredSize(new Dimension(200, 50)); // Größerer Button
+        startMinimizingButton.setFont(new Font("Arial", Font.BOLD, 20)); // Größere Schrift
+        startMinimizingButton.setPreferredSize(new Dimension(200, 50)); // Größerer Button
         topButtonPanel.add(exportButton);
         topButtonPanel.add(importButton);
         this.add(topButtonPanel, BorderLayout.NORTH);
+        bottomPanel.add(startMinimizingButton);
+        this.add(bottomPanel, BorderLayout.SOUTH);
 
-        this.add(startMinimizingButton, BorderLayout.SOUTH);
         addMouseListener(this);
         addMouseMotionListener(this);
         exportButton.addActionListener(e -> exportGraph());
         importButton.addActionListener(e -> importGraph());
 
         startMinimizingButton.addActionListener(e -> {
-            if(!Objects.equals(graph.validate(), "valid")) {
+            if(!graph.isValid) {
                 return;
             }
-            graph.removeUnnecessaryStates(); //todo edges reappear
-            graph.initializeStateIndices();
+            graph.removeUnnecessaryStates();
             JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
             frame.setContentPane(new PanelMinimizing(graph));
             frame.revalidate();
@@ -230,7 +234,9 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
     }
 
     @Override
-    public void mouseMoved(MouseEvent e) {}
+    public void mouseMoved(MouseEvent e) {
+        updateGraphState();
+    }
 
     @Override
     public void mouseEntered(MouseEvent e) {}
@@ -250,7 +256,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
 
             case CURVE_LEFT:
             case CURVE_RIGHT:
-                return isPointNearCurve(px, py, x1, y1, x2, y2, edge.arrowType, 5);
+                return isPointNearLine(px, py, x1, y1, x2, y2, 10); //todo
 
             case SELF:
                 return isPointNearCircle(px, py, x1, y1, NODE_RADIUS / 2, 5);

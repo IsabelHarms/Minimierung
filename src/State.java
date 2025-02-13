@@ -142,6 +142,9 @@ class State {
         }
         g.drawOval(x - radius, y - radius, radius*2, radius*2);
 
+        Font font = new Font("Arial", Font.BOLD, 16); // Arial, Fett, Größe 16
+        g.setFont(font);
+
         FontMetrics fm = g.getFontMetrics();
         int labelWidth = fm.stringWidth(this.getLabel());
         int labelHeight = fm.getAscent();
