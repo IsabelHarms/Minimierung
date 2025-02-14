@@ -5,8 +5,8 @@ public class ToList<StateList> extends LinkedList<StateList> {
     int i;
     int a;
     //Verweis auf K Eintrag
-   Set<ToList<StateList>> FromSet;
-    public ToList(Set<ToList<StateList>> FromSet, int i, int a) {
+    LinkedList<ToList<StateList>> FromSet;
+    public ToList(LinkedList<ToList<StateList>> FromSet, int i, int a) {
         System.out.println("toList generated: " + i + ", " + a);
         this.FromSet = FromSet;
         this.i = i;

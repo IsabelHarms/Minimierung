@@ -22,7 +22,7 @@ class PanelMinimizing extends Panel {
     };
 
     GraphConverter graphConverter;
-    List<Set<StateList<StateEntry>>> D;
+    List<DT> D;
 
     int t;
     public PanelMinimizing(Graph graph) {
@@ -75,7 +75,7 @@ class PanelMinimizing extends Panel {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (graphConverter != null) {
-                    for (Set<State> partition : transformSetOfListsToPartitions(D.get(t))) {
+                    for (Set<State> partition : transformSetOfListsToPartitions(D.get(t).lists)) {
                         if (partition.size() != 0) {
                             mergeNodes(partition);
                         }
@@ -132,10 +132,10 @@ class PanelMinimizing extends Panel {
     }
 
     private void visualizeStep() {
-        List<Set<State>> partitions = transformSetOfListsToPartitions(D.get(t));
+        List<Set<State>> partitions = transformSetOfListsToPartitions(D.get(t).lists);
         printPartitions(partitions);
         visualizePartitions(partitions);
-        graphStateTextArea.setText("t = " + (t+2)  + ": \n" + getListsText(D.get(t)));
+        graphStateTextArea.setText("t = " + (t+2)+ ": \n" + D.get(t).getKText() + D.get(t).getListsText() + "\n" + D.get(t).getGammaText());
     }
     private List<Set<State>> transformSetOfListsToPartitions(Set<StateList<StateEntry>> DT) {
         List<Set<State>> partitions = new ArrayList<>();
@@ -164,19 +164,6 @@ class PanelMinimizing extends Panel {
         }
         return partitions;
     }
-
-    private String getListsText(Set<StateList<StateEntry>> DT) {
-        StringBuilder listsText = new StringBuilder();
-        for (StateList<StateEntry> stateList : DT) {
-            listsText.append("List: i: ").append(stateList.getI()).append(", a: ").append(graphConverter.alphabet.get(stateList.getA())).append(", j: ").append(stateList.getJ()).append("\n");
-            for (StateEntry stateEntry: stateList) {
-                listsText.append(stateEntry.state.getLabel()).append(" ");
-            }
-            listsText.append("\n");
-        }
-        return listsText.toString();
-    }
-
     private void visualizePartitions(List<Set<State>> Q) {
         for (int i = 0; i < Q.size(); i++) {
             Color color = Color.WHITE;
