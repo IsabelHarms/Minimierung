@@ -147,7 +147,7 @@ class PanelMinimizing extends Panel {
 
     private void visualizeStep() {
         List<Set<State>> partitions = transformSetOfListsToPartitions(D.get(t).lists);
-        printPartitions(partitions);
+        //printPartitions(partitions);
         visualizePartitions(partitions);
         updateGraphStateTextArea(partitionColors, t);
     }
@@ -355,7 +355,7 @@ class PanelMinimizing extends Panel {
                             StyleConstants.setBold(colorI, true);
                             doc.insertString(doc.getLength(), " " + i + " ", colorI);
 
-                            doc.insertString(doc.getLength(), " → " + a + " → ", null);
+                            doc.insertString(doc.getLength(), " → " + graphConverter.alphabet.get(a) + " → ", null);
 
                             SimpleAttributeSet colorJ = new SimpleAttributeSet();
                             StyleConstants.setBackground(colorJ, partitionColors[j]);

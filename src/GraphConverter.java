@@ -160,7 +160,7 @@ public class GraphConverter {
         StateList<StateEntry> transitionList2 = fromList.get(1);
         StateList<StateEntry> shorterList = transitionList1.size() <= transitionList2.size() ? transitionList1 : transitionList2;
 
-        createNewToListAndMoveEntry(K, fromList, t + 1, fromList.a, shorterList); //todo modify gamma'
+        createNewToListAndMoveEntry(K, fromList, t + 1, fromList.a, shorterList);
 
         processStateList(shorterList, t); // (ii)
     }
@@ -169,7 +169,6 @@ public class GraphConverter {
         for (StateEntry stateEntry : stateList) {
             State currentState = stateEntry.state;
             for (int b = 0; b < alphabetSize; b++) {
-                //int i = b-'a';
                 int stateIndex = currentState.getIndex();
                 if (stateIndex >= deaSize || b >= alphabetSize) return;
 
@@ -201,7 +200,6 @@ public class GraphConverter {
 
             //L(k,b,i)
             StateList<StateEntry> otherStateList = otherStateEntry.getHead();
-            //System.out.println("andere liste: " + otherStateEntry.state.getLabel() + otherStateList.getI() + otherStateList.getA() + otherStateList.getJ());
             StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedPredecessorList(charIndex, otherStateList.getI(), t, otherStateList);
 
             lastGeneratedList.moveEntryToList(otherStateEntry);
@@ -211,12 +209,9 @@ public class GraphConverter {
     private StateList<StateEntry> getOrCreateLastGeneratedStateList(int t, int b, int k) {
         //L(t+1,b,k)?
         StateList<StateEntry> lastGeneratedList = gammaStateEntry[b][k];
-        //System.out.print("gammastateentry: \n");
-        //printGammaStateEntry();
-        System.out.println("charIndex: " + b + ", k: " + k);
         if (lastGeneratedList == null || lastGeneratedList.getI() != t + 1) {
-            System.out.println("decided against last generated statelist");
             ToList<StateList<StateEntry>> newToList = new ToList<StateList<StateEntry>>(K,t+1,b);
+            System.out.println("toList added:" + newToList.getI() + newToList.getA());
             K.add(newToList);
             lastGeneratedList = createStateList(k, newToList);
             //modify gamma
@@ -227,30 +222,19 @@ public class GraphConverter {
 
 
     private StateList<StateEntry> getOrCreateLastGeneratedPredecessorList(int b, int k, int t,  StateList<StateEntry> otherStateList) {
-        StateList<StateEntry> lastGeneratedList = gammaPredecessors[k][b]; //müsste L(2,0,2) sein ist aber (2,0,4)...
-        System.out.println(k);
+        StateList<StateEntry> lastGeneratedList = gammaPredecessors[k][b];
 
-//L(k,b,t+1)
-        System.out.print("gammapredecessor: \n");
-        //printGammaPredecessor();
-        System.out.println("k: " + k + ", charIndex: " + b);
+        //L(k,b,t+1)
         if (lastGeneratedList == null || lastGeneratedList.getJ() != t + 1) {
             ToList<StateList<StateEntry>> newToList;
-            if (lastGeneratedList != null) {
-                newToList = lastGeneratedList.getHead();
-                System.out.print("alte Liste genommen" + lastGeneratedList.getI());
-           }
-            else {
-                System.out.println("decided against last generated predecessor list");
-                newToList = new ToList<StateList<StateEntry>>(K,k,b);
-
-            }
-            K.add(otherStateList.getHead());
-            lastGeneratedList = createStateList(t + 1, otherStateList.getHead()); //müsste (2,0,5) sein ist aber (5,0,5)
-            System.out.print("liste " + newToList.getI() + newToList.getA() + (t+1));
+            //K.remove(otherStateList.getHead());
+            lastGeneratedList = createStateList(t + 1, otherStateList.getHead());
+            //if(otherStateList.getHead().size() >=2) {
+                K.add(otherStateList.getHead()); //todo only if its not there yet?
+                System.out.println("toList added:" + otherStateList.getI() + otherStateList.getA());
+            //}
             //modify gamma
             gammaPredecessors[k][b] = lastGeneratedList;
-            //printGammaPredecessor();
         }
         return lastGeneratedList;
     }
