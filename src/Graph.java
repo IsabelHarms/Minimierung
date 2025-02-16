@@ -5,6 +5,8 @@ import java.util.stream.Collectors;
 class Graph {
     static final int NODE_RADIUS = 30;
     State startState;
+
+    State defaultState;
     Set<State> endStates;
     private Set<State> states;
     private Set<Edge> edges;

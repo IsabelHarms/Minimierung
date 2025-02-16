@@ -25,6 +25,9 @@ class Panel extends JPanel{
         super.paintComponent(g);
         g.setColor(Color.BLACK);
         for (Edge edge : graph.getEdges()) {
+            if(edge.endState.isDefault) {
+                g.setColor(Color.GRAY);
+            }
             int startX = edge.startState.x;
             int startY = edge.startState.y;
             int endX = edge.endState.x;
@@ -32,6 +35,7 @@ class Panel extends JPanel{
             drawArrowLine(g,startX, startY, endX, endY, edge.arrowType);
             drawArrowHead(g,startX, startY, endX, endY, edge.arrowType);
             drawLabel(g,startX, startY, endX, endY, edge.getLabel(), edge.arrowType);
+            g.setColor(Color.BLACK);
         }
         for (State state : graph.getStates()) {
             state.draw(g);

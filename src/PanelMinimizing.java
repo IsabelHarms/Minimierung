@@ -77,9 +77,17 @@ class PanelMinimizing extends Panel {
                 if (graphConverter != null) {
                     for (Set<State> partition : transformSetOfListsToPartitions(D.get(t).lists)) {
                         if (partition.size() != 0) {
-                            mergeNodes(partition);
+                            if(partition.size() == 1 && partition.iterator().next().isDefault) {
+                                System.out.println("default state skipped");
+                            } else {
+                                mergeNodes(partition);
+                            }
                         }
                     }
+                    graph.removeNode(graph.defaultState);
+                    graph.getEdges().removeAll(graph.defaultState.incomingEdges);
+
+                    graph.defaultState = null;
                 }
                 JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(finalizeButton);
                 if (frame != null) {
@@ -96,8 +104,10 @@ class PanelMinimizing extends Panel {
     }
 
     public void addDefaultState() {
-        State defaultState = new State(50,50, graph.currentNodeNumber++, 30);
+        State defaultState = new State(100,100, graph.currentNodeNumber++, 30);
         graph.addNode(defaultState);
+        defaultState.isDefault = true;
+        graph.defaultState = defaultState;
         graph.addEdge(new Edge(defaultState, defaultState, graph.getAlphabet(), ArrowType.SELF));
         for (State state: graph.getStates()) {
             //collect characters

@@ -14,6 +14,8 @@ class State {
 
     boolean isEnd;
 
+    boolean isDefault;
+
     int algorithmArrayIndex;
 
     int currentPartitionIndex;
