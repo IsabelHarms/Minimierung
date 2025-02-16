@@ -1,7 +1,4 @@
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class DT {
     int t;
@@ -68,9 +65,6 @@ public class DT {
         sb.append("K:\n");
         for (ToList<StateList<StateEntry>> toList : K) {
             sb.append("delta'(").append(toList.getI()).append(",").append(alphabet.get(toList.getA())).append(")\n");
-            for (StateList<StateEntry> stateList : toList) {
-                sb.append(getListText(stateList)).append(" ");
-            }
         }
         return sb.toString();
     }
@@ -82,7 +76,7 @@ public class DT {
         for (int i = 0; i < gammaStateEntry.length; i++) {
             for (int j = 0; j < gammaStateEntry[i].length; j++) {
                 if (gammaStateEntry[i][j] != null) {
-                    sb.append("[").append(i).append(", ").append(j).append("] -> ").append(getListText(gammaStateEntry[i][j]));
+                    sb.append("[").append(alphabet.get(i)).append(", ").append(j).append("] -> ").append(getListText(gammaStateEntry[i][j]));
                 }
             }
         }
@@ -91,7 +85,7 @@ public class DT {
         for (int i = 0; i < gammaPredecessors.length; i++) {
             for (int j = 0; j < gammaPredecessors[i].length; j++) {
                 if (gammaPredecessors[i][j] != null) {
-                    sb.append("[").append(i).append(", ").append(j).append("] -> ").append(getListText(gammaPredecessors[i][j]));
+                    sb.append("[").append(i).append(", ").append(alphabet.get(j)).append("] -> ").append(getListText(gammaPredecessors[i][j]));
                 }
             }
         }
@@ -103,7 +97,7 @@ public class DT {
         return "L(" + list.getI() + "," + alphabet.get(list.getA()) + "," + list.getJ() + ")\n";
     }
 
-    public String getListsText() {
+    public String getListsText() { //todo sort by a and i
         StringBuilder listsText = new StringBuilder();
         listsText.append("Lists: \n");
         for (StateList<StateEntry> stateList : lists) {

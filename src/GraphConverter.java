@@ -30,8 +30,8 @@ public class GraphConverter {
         this.alphabet = new ArrayList<>(graph.getAlphabet());
         this.Q = Q;
 
-        this.gammaStateEntry = new StateList[alphabetSize][deaSize];
-        this.gammaPredecessors = new StateList[deaSize][alphabetSize];
+        this.gammaStateEntry = new StateList[alphabetSize][deaSize+1];
+        this.gammaPredecessors = new StateList[deaSize+1][alphabetSize];
 
         this.stateEntryArray = new StateEntry[deaSize][alphabetSize]; //delta
         K = new LinkedList<>(); // K
@@ -201,7 +201,8 @@ public class GraphConverter {
 
             //L(k,b,i)
             StateList<StateEntry> otherStateList = otherStateEntry.getHead();
-            StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedPredecessorList(charIndex, otherStateList.getI(), t);
+            //System.out.println("andere liste: " + otherStateEntry.state.getLabel() + otherStateList.getI() + otherStateList.getA() + otherStateList.getJ());
+            StateList<StateEntry> lastGeneratedList = getOrCreateLastGeneratedPredecessorList(charIndex, otherStateList.getI(), t, otherStateList);
 
             lastGeneratedList.moveEntryToList(otherStateEntry);
         }
@@ -225,26 +226,31 @@ public class GraphConverter {
     }
 
 
-    private StateList<StateEntry> getOrCreateLastGeneratedPredecessorList(int b, int k, int t) {
-        StateList<StateEntry> lastGeneratedList = gammaPredecessors[k][b];
+    private StateList<StateEntry> getOrCreateLastGeneratedPredecessorList(int b, int k, int t,  StateList<StateEntry> otherStateList) {
+        StateList<StateEntry> lastGeneratedList = gammaPredecessors[k][b]; //müsste L(2,0,2) sein ist aber (2,0,4)...
+        System.out.println(k);
+
 //L(k,b,t+1)
         System.out.print("gammapredecessor: \n");
-        printGammaPredecessor();
+        //printGammaPredecessor();
         System.out.println("k: " + k + ", charIndex: " + b);
         if (lastGeneratedList == null || lastGeneratedList.getJ() != t + 1) {
             ToList<StateList<StateEntry>> newToList;
             if (lastGeneratedList != null) {
                 newToList = lastGeneratedList.getHead();
+                System.out.print("alte Liste genommen" + lastGeneratedList.getI());
            }
             else {
                 System.out.println("decided against last generated predecessor list");
                 newToList = new ToList<StateList<StateEntry>>(K,k,b);
+
             }
-            K.add(newToList);
-            lastGeneratedList = createStateList(t + 1, newToList);
+            K.add(otherStateList.getHead());
+            lastGeneratedList = createStateList(t + 1, otherStateList.getHead()); //müsste (2,0,5) sein ist aber (5,0,5)
+            System.out.print("liste " + newToList.getI() + newToList.getA() + (t+1));
             //modify gamma
             gammaPredecessors[k][b] = lastGeneratedList;
-            printGammaPredecessor();
+            //printGammaPredecessor();
         }
         return lastGeneratedList;
     }

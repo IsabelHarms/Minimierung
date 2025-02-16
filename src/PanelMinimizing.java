@@ -96,7 +96,7 @@ class PanelMinimizing extends Panel {
     }
 
     public void addDefaultState() {
-        State defaultState = new State(20,20, graph.currentNodeNumber++, 30);
+        State defaultState = new State(50,50, graph.currentNodeNumber++, 30);
         graph.addNode(defaultState);
         graph.addEdge(new Edge(defaultState, defaultState, graph.getAlphabet(), ArrowType.SELF));
         for (State state: graph.getStates()) {
