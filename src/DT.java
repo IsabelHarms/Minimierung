@@ -1,4 +1,6 @@
+import java.awt.*;
 import java.util.*;
+import java.util.List;
 
 public class DT {
     int t;
@@ -97,17 +99,37 @@ public class DT {
         return "L(" + list.getI() + "," + alphabet.get(list.getA()) + "," + list.getJ() + ")\n";
     }
 
-    public String getListsText() { //todo sort by a and i
+    public String getListsText(Color[] partitionColors) {
         StringBuilder listsText = new StringBuilder();
-        listsText.append("Lists: \n");
-        for (StateList<StateEntry> stateList : lists) {
-            listsText.append(getListText(stateList));
-            for (StateEntry stateEntry: stateList) {
-                listsText.append(stateEntry.state.getLabel()).append(" ");
-            }
-            listsText.append("\n");
-        }
+        listsText.append("<html><body><h3>Lists:</h3>");
+
+        lists.stream()
+                .sorted(Comparator.comparingInt(StateList::getI)) // Sortierung nach list.getI()
+                .forEach(stateList -> {
+                    int i = stateList.getI();
+                    int a = stateList.getA();
+                    int j = stateList.getJ();
+
+                    // Farbflecken mit HTML und RGB-Farbcodes
+                    String colorI = getColorHex(partitionColors[i]);
+                    String colorJ = getColorHex(partitionColors[j]);
+
+                    listsText.append("<span style='background-color:").append(colorI)
+                            .append("; padding:5px 15px; border-radius:10px;'>&nbsp;</span>")
+                            .append(" → ")
+                            .append("<b>").append(a).append("</b>")
+                            .append(" → ")
+                            .append("<span style='background-color:").append(colorJ)
+                            .append("; padding:5px 15px; border-radius:10px;'>&nbsp;</span>")
+                            .append("<br>");
+                });
+
+        listsText.append("</body></html>");
         return listsText.toString();
     }
 
+    // Methode zur Umwandlung von Color in Hex-Werte
+    private String getColorHex(Color color) {
+        return String.format("#%02x%02x%02x", color.getRed(), color.getGreen(), color.getBlue());
+    }
 }

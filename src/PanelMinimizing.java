@@ -1,4 +1,8 @@
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.SimpleAttributeSet;
+import javax.swing.text.StyleConstants;
+import javax.swing.text.StyledDocument;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -145,7 +149,7 @@ class PanelMinimizing extends Panel {
         List<Set<State>> partitions = transformSetOfListsToPartitions(D.get(t).lists);
         printPartitions(partitions);
         visualizePartitions(partitions);
-        graphStateTextArea.setText("t = " + (t+2)+ ": \n" + D.get(t).getKText() + D.get(t).getListsText() + "\n" + D.get(t).getGammaText());
+        updateGraphStateTextArea(partitionColors, t);
     }
     private List<Set<State>> transformSetOfListsToPartitions(Set<StateList<StateEntry>> DT) {
         List<Set<State>> partitions = new ArrayList<>();
@@ -324,6 +328,56 @@ class PanelMinimizing extends Panel {
                 mergeNodes(partition);
                 repaint();
             }
+        }
+    }
+    public void updateGraphStateTextArea(Color[] partitionColors, int t) {
+        graphStateTextArea.setText("");
+        StyledDocument doc = graphStateTextArea.getStyledDocument();
+
+        try {
+            SimpleAttributeSet headerStyle = new SimpleAttributeSet();
+            StyleConstants.setBold(headerStyle, true);
+            doc.insertString(doc.getLength(), "t = " + (t + 2) + "\n\n", headerStyle);
+
+            doc.insertString(doc.getLength(), D.get(t).getKText() + "\n\n", null);
+
+            D.get(t).lists.stream()
+                    .sorted(Comparator.comparingInt(StateList::getI)) // Sortierung nach `getI()`
+                    .forEach(stateList -> {
+                        try {
+                            int i = stateList.getI();
+                            int a = stateList.getA();
+                            int j = stateList.getJ();
+
+                            SimpleAttributeSet colorI = new SimpleAttributeSet();
+                            StyleConstants.setBackground(colorI, partitionColors[i]);
+                            StyleConstants.setForeground(colorI, Color.BLACK);
+                            StyleConstants.setBold(colorI, true);
+                            doc.insertString(doc.getLength(), " " + i + " ", colorI);
+
+                            doc.insertString(doc.getLength(), " → " + a + " → ", null);
+
+                            SimpleAttributeSet colorJ = new SimpleAttributeSet();
+                            StyleConstants.setBackground(colorJ, partitionColors[j]);
+                            StyleConstants.setForeground(colorJ, Color.BLACK);
+                            StyleConstants.setBold(colorJ, true);
+                            doc.insertString(doc.getLength(), " " + j + "  ", colorJ);
+
+                            doc.insertString(doc.getLength(), "[", null);
+                            for (StateEntry stateEntry : stateList) {
+                                doc.insertString(doc.getLength(), stateEntry.state.getLabel() + " ", null);
+                            }
+                            doc.insertString(doc.getLength(), "]\n", null);
+
+                        } catch (BadLocationException e) {
+                            e.printStackTrace();
+                        }
+                    });
+
+            doc.insertString(doc.getLength(), "\n" + D.get(t).getGammaText(), null);
+
+        } catch (BadLocationException e) {
+            e.printStackTrace();
         }
     }
 

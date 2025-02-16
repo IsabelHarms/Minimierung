@@ -5,13 +5,14 @@ import java.awt.geom.QuadCurve2D;
 class Panel extends JPanel{
     static final int NODE_RADIUS = 30;
     protected Graph graph;
-    protected JTextArea graphStateTextArea;  // Text area to display the graph state
+    protected JTextPane  graphStateTextArea;
     protected JScrollPane scrollPane;  // To make the text area scrollable
     public Panel(Graph graph) {
 
         setLayout(new BorderLayout());
         this.graph = graph;
-        graphStateTextArea = new JTextArea(20, 20);
+        graphStateTextArea = new JTextPane();
+        graphStateTextArea.setPreferredSize(new Dimension(500, 1100));
         graphStateTextArea.setEditable(false);
         graphStateTextArea.setFont(new Font("Arial", Font.PLAIN, 25));
 
