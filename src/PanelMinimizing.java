@@ -89,7 +89,11 @@ class PanelMinimizing extends Panel {
                         }
                     }
                     graph.removeNode(graph.defaultState);
-                    graph.getEdges().removeAll(graph.defaultState.incomingEdges);
+                    Set<Edge> defaultEdges = new HashSet(graph.defaultState.incomingEdges);
+                    defaultEdges.addAll(graph.defaultState.outgoingEdges);
+                    for (Edge defaultEdge : defaultEdges) {
+                        graph.removeEdge(defaultEdge);
+                    }
 
                     graph.defaultState = null;
                 }
