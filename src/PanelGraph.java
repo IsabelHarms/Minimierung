@@ -130,7 +130,7 @@ class PanelGraph extends Panel implements MouseListener, MouseMotionListener {
                                 null, options, options[0]);
 
                         switch (choice) {
-                            case 0: // Delete Edge todo curved edge hitbox
+                            case 0: // Delete Edge
                                 if (edge.endState.connected(edge.startState) != null) {
                                     edge.endState.connected(edge.startState).arrowType = ArrowType.STRAIGHT; //not bidirectional anymore
                                 }

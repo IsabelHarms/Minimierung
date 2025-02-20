@@ -62,7 +62,7 @@ public class DT {
         return lists;
     }
 
-    public String getKText() { //todo statelist ist nicht copy, enthält deshalb nur die Endeinträge
+    public String getKText() {
         StringBuilder sb = new StringBuilder();
         sb.append("K:\n");
         for (ToList<StateList<StateEntry>> toList : K) {

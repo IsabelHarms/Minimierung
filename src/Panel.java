@@ -14,7 +14,7 @@ class Panel extends JPanel{
         graphStateTextArea = new JTextPane();
         graphStateTextArea.setPreferredSize(new Dimension(500, 1100));
         graphStateTextArea.setEditable(false);
-        graphStateTextArea.setFont(new Font("Arial", Font.PLAIN, 25));
+        graphStateTextArea.setFont(new Font("Arial", Font.PLAIN, 20));
 
         graphStateTextArea.setText(graph.getGraphState());  // Initialize with current state
         scrollPane = new JScrollPane(graphStateTextArea);

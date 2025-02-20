@@ -77,8 +77,8 @@ public class GraphConverter {
     }
     private StateList<StateEntry> addStateList(int i, int a, int j, StateEntry[][] transitionListEntryArray, ToList<StateList<StateEntry>> head) {
         StateList<StateEntry> transitionList = new StateList<>(j, head);
-        gammaStateEntry[a][j] = transitionList;
-        gammaPredecessors[i][a] = transitionList;
+        //gammaStateEntry[a][j] = transitionList;
+        //gammaPredecessors[i][a] = transitionList;
         Set<State> Qstart = Q.get(i);
         for (State startState : Qstart) {
             State nextState = startState.getNextState(this.alphabet.get(a));
