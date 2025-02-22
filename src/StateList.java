@@ -47,7 +47,7 @@ public class StateList<T extends StateEntry> extends LinkedList<StateEntry> {
     private void deleteIfEmpty() {
         if (this.size() == 0) {
             this.getHead().remove(this);
-            this.getHead().FromSet.remove(this.getHead());
+            //this.getHead().FromSet.remove(this.getHead());
         }
     }
 }

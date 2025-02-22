@@ -229,10 +229,10 @@ public class GraphConverter {
             ToList<StateList<StateEntry>> newToList;
             //K.remove(otherStateList.getHead());
             lastGeneratedList = createStateList(t + 1, otherStateList.getHead());
-            //if(otherStateList.getHead().size() >=2) {
+            if(otherStateList.getHead().size() >=2) {
                 K.add(otherStateList.getHead()); //todo only if its not there yet?
                 System.out.println("toList added:" + otherStateList.getI() + otherStateList.getA());
-            //}
+            }
             //modify gamma
             gammaPredecessors[k][b] = lastGeneratedList;
         }
